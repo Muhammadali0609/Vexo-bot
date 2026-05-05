@@ -34,10 +34,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⏳ Подожди, уже обрабатываю твоё видео")
         return
         
-    if text in video_cache:
-        await update.message.reply_video(video=open(video_cache[text], "rb"))
-        return
-        
     user_lock.add(user_id)
 
     msg = await update.message.reply_text("⬇️ Скачивание...")
