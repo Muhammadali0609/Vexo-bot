@@ -7,7 +7,16 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 from config import TOKEN
 from downloader import download_tiktok
 
+def render_bar(percent: str):
+    try:
+        p = int(percent.replace("%", "").strip())
+    except:
+        p = 0
 
+    filled = "█" * (p // 10)
+    empty = "░" * (10 - (p // 10))
+
+    return f"{filled}{empty} {p}%"
 # 🔥 прогресс будет обновлять это сообщение
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
@@ -29,7 +38,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         while True:
             if state["percent"] != last:
                 last = state["percent"]
-                await msg.edit_text(f"⬇️ Скачивание...\n{last}")
+                await msg.edit_text(
+                    f"⬇️ Скачивание...\n\n{render_bar(last)}"
+                )
 
             await asyncio.sleep(0.8)
 
