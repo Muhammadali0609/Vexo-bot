@@ -70,6 +70,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text,
             progress_callback
         )
+        video_cache[text] = file_path
 
         task.cancel()
 
