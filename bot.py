@@ -26,33 +26,31 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("📎 Отправь TikTok ссылку")
         return
 
-    msg = await update.message.reply_text("⬇️ Подготовка загрузки...")
+    msg = await update.message.reply_text("⬇️ Скачивание...")
 
-    # сюда будет приходить реальный прогресс
-    state = {"percent": "0%"}
+    state = {"percent": "0%", "speed": "..."}
 
     def progress_callback(p, speed):
         state["percent"] = p
         state["speed"] = speed
 
-    async def progress_updater():
+    async def updater():
         last = ""
-        while True:
-            if state["percent"] != last:
-                last = state["percent"]
-                await msg.edit_text(
-                    f"⬇️ Скачивание...\n\n"
-                    f"{render_bar(state['percent'])}\n"
-                    f"⚡ {state['speed']}"
-                )
 
-            await asyncio.sleep(0.8)
+        while True:
+            bar = render_bar(state["percent"])
+
+            await msg.edit_text(
+                f"⬇️ Скачивание...\n\n"
+                f"{bar}\n"
+                f"⚡ {state['speed']}"
+            )
+
+            await asyncio.sleep(1)
+
+    task = asyncio.create_task(updater())
 
     try:
-        # запускаем обновление прогресса
-        task = asyncio.create_task(progress_updater())
-
-        # реальная загрузка (не блокирует event loop)
         file_path = await asyncio.to_thread(
             download_tiktok,
             text,
@@ -61,18 +59,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         task.cancel()
 
-        await msg.edit_text("⬆️ Отправка видео...")
-
         with open(file_path, "rb") as video:
             await update.message.reply_video(video=video)
 
         await msg.delete()
-
         os.remove(file_path)
 
     except Exception:
+        task.cancel()
         await msg.edit_text("❌ Ошибка загрузки")
-
+        
     finally:
         if not task.done():
             task.cancel()
