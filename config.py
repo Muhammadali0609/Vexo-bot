@@ -1,3 +1,3 @@
 import os
 
-TOKEN = os.getenv("8666746844:AAEulk80221nT7tFSZ9HIV4YZlKKzhc07mg").strip()
+TOKEN = os.getenv("8666746844:AAEulk80221nT7tFSZ9HIV4YZlKKzhc07mg")
