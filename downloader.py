@@ -39,7 +39,7 @@ def download_tiktok(url: str, progress_callback=None):
         "progress_hooks": [hook],
         "http_headers": {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        }
+        },
 
         # 🔥 ключ к стабильности
         "retries": 10,
