@@ -40,7 +40,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         while True:
             if state["percent"] != last:
                 last = state["percent"]
-               await msg.edit_text(
+                await msg.edit_text(
                     f"⬇️ Скачивание...\n\n"
                     f"{render_bar(state['percent'])}\n"
                     f"⚡ {state['speed']}"
