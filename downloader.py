@@ -12,30 +12,31 @@ def download_tiktok(url: str, progress_callback=None):
 
     def hook(d):
         if d['status'] == 'downloading':
-            percent = d.get('_percent_str', '0%').strip()
+
+            downloaded = d.get('downloaded_bytes', 0)
+            total = d.get('total_bytes') or d.get('total_bytes_estimate')
+
+            # % по байтам (самый стабильный способ)
+            percent = "0%"
+            if total:
+                percent = f"{int(downloaded / total * 100)}%"
 
             speed = d.get('speed')
             if speed:
-                speed_mb = speed / 1024 / 1024
-                speed_text = f"{speed_mb:.2f} MB/s"
+                speed = f"{speed / 1024 / 1024:.2f} MB/s"
             else:
-                speed_text = "..."
+                speed = "..."
 
             if progress_callback:
-                progress_callback(percent, speed_text)
+                progress_callback(percent, speed)
 
     ydl_opts = {
         "outtmpl": os.path.join(DOWNLOADS_DIR, "%(id)s.%(ext)s"),
         "format": "best",
         "quiet": True,
-
         "progress_hooks": [hook],
-
         "nocheckcertificate": True,
-        "http_headers": {
-            "User-Agent": "Mozilla/5.0"
-        },
-
+        "http_headers": {"User-Agent": "Mozilla/5.0"},
         "retries": 5,
         "fragment_retries": 5,
         "socket_timeout": 20,
