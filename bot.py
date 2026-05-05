@@ -4,7 +4,7 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 
 from config import TOKEN
 from downloader import download_tiktok
-print("TOKEN=", os.getenv("TOKEN"))
+print("TOKEN=", repr(TOKEN))
 async def handle_message(update, context):
     text = update.message.text
 
