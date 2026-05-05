@@ -7,6 +7,9 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 from config import TOKEN
 from downloader import download_tiktok
 
+video_cache = {}
+user_lock = set()
+
 def render_bar(percent: str):
     try:
         p = int(percent.replace("%", "").strip())
@@ -21,10 +24,21 @@ def render_bar(percent: str):
 # 🔥 прогресс будет обновлять это сообщение
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
+    user_id = update.message.from_user.id
 
     if "tiktok.com" not in text:
         await update.message.reply_text("📎 Отправь TikTok ссылку")
         return
+
+    if user_id in user_lock:
+        await update.message.reply_text("⏳ Подожди, уже обрабатываю твоё видео")
+        return
+        
+    if text in video_cache:
+        await update.message.reply_video(video=open(video_cache[text], "rb"))
+        return
+        
+    user_lock.add(user_id)
 
     msg = await update.message.reply_text("⬇️ Скачивание...")
 
@@ -70,6 +84,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.edit_text("❌ Ошибка загрузки")
         
     finally:
+        user_lock.remove(user_id)
         if not task.done():
             task.cancel()
 
