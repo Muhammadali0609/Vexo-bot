@@ -30,30 +30,40 @@ def download_tiktok(url: str, progress_callback=None):
             if progress_callback:
                 progress_callback(percent, speed)
 
-    ydl_opts = {
-        "outtmpl": os.path.join(DOWNLOADS_DIR, "%(id)s.%(ext)s"),
-        "format": "best",
-        "quiet": True,
-        "progress_hooks": [hook],
-        "nocheckcertificate": True,
-        "http_headers": {"User-Agent": "Mozilla/5.0"},
-        "retries": 5,
-        "fragment_retries": 5,
-        "socket_timeout": 20,
-    }
-
     last_error = None
 
-    for i in range(3):
+    ydl_opts = {
+        "outtmpl": os.path.join(DOWNLOADS_DIR, "%(id)s.%(ext)s"),
+        "format": "best[ext=mp4]/best",
+        "quiet": True,
+        "progress_hooks": [hook],
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        }
+
+        # 🔥 ключ к стабильности
+        "retries": 10,
+        "fragment_retries": 10,
+        "socket_timeout": 40,
+        "concurrent_fragment_downloads": 3,
+        "tls_verify": False,
+        "extractor_retries": 5,
+        "sleep_interval": 1,
+        "max_sleep_interval": 5,
+    }
+
+    for i in range(5):  # больше попыток
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
-                file_path = ydl.prepare_filename(info)
-                return file_path
+                return ydl.prepare_filename(info)
 
         except Exception as e:
             last_error = e
-            print(f"[Vexo] Попытка {i+1} не удалась: {e}")
-            time.sleep(1.5)
 
-    raise Exception(f"Не удалось скачать видео: {last_error}")
+            print(f"[Vexo] Retry {i+1}: {e}")
+
+            # 🔥 важный момент — пауза растёт
+            time.sleep(1.5 * (i + 1))
+
+    raise Exception(f"Failed after retries: {last_error}")
