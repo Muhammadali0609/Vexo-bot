@@ -25,7 +25,7 @@ def download_tiktok(url: str, progress_callback=None):
             if speed:
                 speed = f"{speed / 1024 / 1024:.2f} MB/s"
             else:
-                speed = "..."
+                speed = "0.00 MB/s"
 
             if progress_callback:
                 progress_callback(percent, speed)
