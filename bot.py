@@ -17,6 +17,7 @@ def render_bar(percent: str):
     empty = "░" * (10 - (p // 10))
 
     return f"{filled}{empty} {p}%"
+
 # 🔥 прогресс будет обновлять это сообщение
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
@@ -30,16 +31,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # сюда будет приходить реальный прогресс
     state = {"percent": "0%"}
 
-    def progress_callback(p):
-        state["percent"] = p
+    def progress_callback(p, speed):
+    state["percent"] = p
+    state["speed"] = speed
 
     async def progress_updater():
         last = ""
         while True:
             if state["percent"] != last:
                 last = state["percent"]
-                await msg.edit_text(
-                    f"⬇️ Скачивание...\n\n{render_bar(last)}"
+               await msg.edit_text(
+                    f"⬇️ Скачивание...\n\n"
+                    f"{render_bar(state['percent'])}\n"
+                    f"⚡ {state['speed']}"
                 )
 
             await asyncio.sleep(0.8)
