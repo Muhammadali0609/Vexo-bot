@@ -32,8 +32,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state = {"percent": "0%"}
 
     def progress_callback(p, speed):
-    state["percent"] = p
-    state["speed"] = speed
+        state["percent"] = p
+        state["speed"] = speed
 
     async def progress_updater():
         last = ""
