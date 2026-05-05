@@ -28,7 +28,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     msg = await update.message.reply_text("⬇️ Скачивание...")
 
-    state = {"percent": "0%", "speed": "..."}
+    state = {"percent": "0%", "speed": "0.00 MB/s"}
 
     def progress_callback(p, speed):
         state["percent"] = p
