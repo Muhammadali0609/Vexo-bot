@@ -1,33 +1,34 @@
 import os
+import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
 from config import TOKEN
 from downloader import download_tiktok
 
-async def handle_message(update, context):
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
     if "tiktok.com" not in text:
         await update.message.reply_text("Отправь TikTok ссылку 📎")
         return
 
-    # 1. отправляем статус и сохраняем сообщение
     status_msg = await update.message.reply_text("Скачиваю видео... ⏳")
 
     try:
-        file_path = download_tiktok(text)
+        # 🔥 ВАЖНО: уводим блокирующий код в отдельный поток
+        file_path = await asyncio.to_thread(download_tiktok, text)
 
-        # 2. отправляем видео
-        await update.message.reply_video(video=open(file_path, "rb"))
+        with open(file_path, "rb") as video:
+            await update.message.reply_video(video=video)
 
-        # 3. удаляем статус сообщение
         await status_msg.delete()
 
         os.remove(file_path)
 
     except Exception as e:
-        await status_msg.edit_text("Ошибка, попробуйте еще раз")
+        await status_msg.edit_text("Ошибка, попробуйте еще раз ❌")
 
 
 app = ApplicationBuilder().token(TOKEN).build()
