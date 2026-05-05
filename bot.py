@@ -8,8 +8,7 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 from config import TOKEN
 from downloader import download_tiktok
 
-video_cache = {}
-in_progress = set()
+is_downloading = False
 
 def extract_video_id(url):
     match = re.search(r'/video/(\d+)', url)
@@ -30,25 +29,16 @@ def render_bar(percent: str):
 
 # 🔥 прогресс будет обновлять это сообщение
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global is_downloading
     text = update.message.text
 
     if "tiktok.com" not in text:
-        await update.message.reply_text("📎 Отправь TikTok ссылку")
+        return
+    if is_downloading:
         return
 
-    key = extract_video_id(text)
-
-    if key in video_cache:
-        with open(video_cache[key], "rb") as video:
-            await update.message.reply_video(video=video)
-        return
-
-    if key in in_progress:
-        await update.message.reply_text("⏳ Уже скачиваю это видео...")
-        return
-
-    in_progress.add(key)
-
+    is_downloading = True
+    
     msg = await update.message.reply_text("⬇️ Скачивание...")
 
     state = {"percent": "0%", "speed": "0.00 MB/s"}
@@ -78,7 +68,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text,
             progress_callback
         )
-        video_cache[text] = file_path
 
         task.cancel()
 
@@ -93,7 +82,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.edit_text("❌ Ошибка загрузки")
         
     finally:
-        in_progress.remove(key)
+        is_downloading = False
         if not task.done():
             task.cancel()
 
