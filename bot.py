@@ -3,6 +3,7 @@ import re
 import asyncio
 import time
 
+from aiohttp import web
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
@@ -112,5 +113,27 @@ app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-print("Vexo Bot запущен 🚀")
-app.run_polling(drop_pending_updates=True)
+async def webhook_handler(request):
+    data = await request.json()
+    update = Update.de_json(data, app.bot)
+    await app.process_update(update)
+    return web.Response()
+
+async def main():
+    await app.bot.set_webhook(url=os.environ["WEBHOOK_URL"])
+
+    server = web.Application()
+    server.router.add_post("/webhook", webhook_handler)
+
+    runner = web.AppRunner(server)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", int(os.environ.get("PORT", 10000)))
+    await site.start()
+
+    print("Webhook bot started")
+
+    while True:
+        await asyncio.sleep(3600)
+
+if __name__ == "__main__":
+    asyncio.run(main())
