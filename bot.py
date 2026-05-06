@@ -30,7 +30,7 @@ async def handle_message(update, context):
     asyncio.create_task(process_video(update, context, text))
     
 async def process_video(update, context, text):
-
+    await asyncio.sleep(0.3)
     async with semaphore:  # 🔥 ограничение
         msg = await update.message.reply_text("⬇️ Скачивание...")
 
