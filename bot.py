@@ -50,21 +50,21 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, url:
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 
-async def main():
-    await app.initialize()
-    
+async def post_init(app):
     await app.bot.delete_webhook(drop_pending_updates=True)
     await app.bot.set_webhook(WEBHOOK_URL)
-    print("🚀 Bot started")
 
-    await app.updater.start_webhook(
+    print("🚀 webhook set")
+
+def main():
+    port = int(os.environ.get("PORT", 10000))
+    app.post_init = post_init
+    app.run_webhook(
         listen="0.0.0.0",
-        port=int(os.environ.get("PORT", 10000)),
+        port=port,
         url_path="webhook",
-        webhook_url=WEBHOOK_URL
+        webhook_url=WEBHOOK_URL,
     )
 
-    await asyncio.Event().wait()
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
