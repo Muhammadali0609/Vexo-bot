@@ -8,7 +8,7 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 from config import TOKEN
 from downloader import download_tiktok
 
-lock = asyncio.Lock()
+semaphore = asyncio.Semaphore(2)
 
 def render_bar(percent: str):
     try:
@@ -21,24 +21,27 @@ def render_bar(percent: str):
 
     return f"{filled}{empty} {p}%"
 
-# 🔥 прогресс будет обновлять это сообщение
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_message(update, context):
     text = update.message.text
 
     if "tiktok.com" not in text:
         return
 
-    if lock.locked():
-        return
-    async with lock:
+    asyncio.create_task(process_video(update, context, text))
+    
+async def process_video(update, context, text):
+
+    async with semaphore:  # 🔥 ограничение
         msg = await update.message.reply_text("⬇️ Скачивание...")
-    
+
         state = {"percent": "0%", "speed": "0.00 MB/s"}
-    
+
         def progress_callback(p, speed):
-            state["percent"] = p
-            state["speed"] = speed
-    
+            if p:
+                state["percent"] = p
+            if speed:
+                state["speed"] = speed
+
         async def updater():
             while True:
                 try:
@@ -49,11 +52,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     )
                 except:
                     pass
-    
                 await asyncio.sleep(1)
-    
+
         task = asyncio.create_task(updater())
-    
+
         try:
             file_path = await asyncio.to_thread(
                 download_tiktok,
@@ -62,10 +64,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             task.cancel()
-    
+
             with open(file_path, "rb") as video:
                 await update.message.reply_video(video=video)
-    
+
             await msg.delete()
             os.remove(file_path)
 
@@ -73,10 +75,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             task.cancel()
             await msg.edit_text("❌ Ошибка")
             print("ERROR:", e)
-
-
-
-# 🔥 запуск бота
+            
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
