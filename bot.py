@@ -69,13 +69,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await msg.delete()
             os.remove(file_path)
 
-        except Exception:
+        except Exception as e:
             task.cancel()
-            await msg.edit_text("❌ Ошибка загрузки")
-        
-    finally:
-        if not task.done():
-            task.cancel()
+            await msg.edit_text("❌ Ошибка")
+            print("ERROR:", e)
+
 
 
 # 🔥 запуск бота
