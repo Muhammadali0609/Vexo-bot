@@ -120,7 +120,7 @@ async def webhook_handler(request):
     return web.Response()
 
 async def main():
-    await app.bot.set_webhook(url=os.environ["WEBHOOK_URL"])
+    await app.bot.set_webhook(url=WEBHOOK_URL)
 
     server = web.Application()
     server.router.add_post("/webhook", webhook_handler)
