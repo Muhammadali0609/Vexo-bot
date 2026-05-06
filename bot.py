@@ -58,31 +58,36 @@ app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 # 🔥 webhook endpoint
 @flask_app.route("/webhook", methods=["POST"])
 def webhook():
-    print("🔥 WEBHOOK HIT")
     data = request.get_json(force=True)
     update = Update.de_json(data, app.bot)
-
-    asyncio.run(app.process_update(update))
+    # 💎 ВАЖНО: используем СУЩЕСТВУЮЩИЙ loop, не создаём новый
+    asyncio.get_event_loop().create_task(app.process_update(update))
     return "ok"
 
-@flask_app.route("/", methods=["GET"])
+@flask_app.route("/")
 def home():
-    return "Bot is running"
+    return "OK"
     
-def start_bot():
+def main():
+    import threading
     async def setup():
         await app.initialize()
         await app.bot.delete_webhook(drop_pending_updates=True)
-        await app.bot.set_webhook(url=WEBHOOK_URL)
-        print("🚀 Webhook set")
+        await app.bot.set_webhook(WEBHOOK_URL)
+        print("🚀 webhook set")
 
     asyncio.run(setup())
 
-def main():
-    start_bot()
     port = int(os.environ.get("PORT", 10000))
-    print("🚀 Flask starting on port", port)
-    flask_app.run(host="0.0.0.0", port=port)
+
+    threading.Thread(
+        target=lambda: flask_app.run(host="0.0.0.0", port=port),
+        daemon=True
+    ).start()
+
+    print("🚀 bot running")
+
+    asyncio.get_event_loop().run_forever()
 
 if __name__ == "__main__":
     main()
