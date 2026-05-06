@@ -9,22 +9,30 @@ os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
 def download_tiktok(url: str) -> str:
     """
-    Скачивает видео и возвращает путь к файлу.
-    Максимально стабильная версия без прогресс-колбэков.
+    Универсальный downloader для:
+    - TikTok
+    - YouTube
+    - Instagram
     """
 
     ydl_opts = {
+        # 📁 куда сохраняем
         "outtmpl": os.path.join(DOWNLOADS_DIR, "%(id)s.%(ext)s"),
-        "format": "best[ext=mp4]/best",
-        "quiet": True,
 
-        # 🔥 стабильность сети
+        # 🎬 лучший mp4
+        "format": "best[ext=mp4]/best",
+
+        # 🔕 без логов
+        "quiet": True,
+        "noplaylist": True,
+
+        # 🌐 стабильность сети
         "retries": 10,
         "fragment_retries": 10,
         "socket_timeout": 40,
         "extractor_retries": 5,
 
-        # 🔥 TikTok/анти-блок
+        # 🔐 анти-блок (очень важно для TikTok/Instagram)
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -33,21 +41,28 @@ def download_tiktok(url: str) -> str:
             )
         },
 
-        # 🔥 чуть стабильнее разбор
+        # ⚙️ стабильность парсинга
         "nocheckcertificate": True,
+
+        # 📉 убирает лишние зависания
+        "concurrent_fragment_downloads": 2,
     }
 
     last_error = None
 
-    for i in range(3):  # 3 попытки достаточно
+    # 🔁 несколько попыток (очень важно для TikTok/IG)
+    for i in range(3):
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
+
+                # получаем путь к файлу
                 file_path = ydl.prepare_filename(info)
+
                 return file_path
 
         except Exception as e:
             last_error = e
             print(f"[Downloader] retry {i + 1}: {e}")
 
-    raise Exception(f"Download failed: {last_error}")
+    raise Exception(f"Download failed after retries: {last_error}")
