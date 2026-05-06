@@ -58,6 +58,7 @@ app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 # 🔥 webhook endpoint
 @flask_app.route("/webhook", methods=["POST"])
 def webhook():
+    print("🔥 WEBHOOK HIT")
     data = request.get_json(force=True)
     update = Update.de_json(data, app.bot)
 
