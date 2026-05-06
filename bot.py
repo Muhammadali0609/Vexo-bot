@@ -8,6 +8,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
 from config import TOKEN
+from config import TOKEN
 from downloader import download_tiktok
 
 semaphore = asyncio.Semaphore(2)
