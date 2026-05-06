@@ -117,7 +117,7 @@ app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 async def main():
     await app.initialize()
 
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    
 
     await app.bot.set_webhook(url=WEBHOOK_URL)
 
