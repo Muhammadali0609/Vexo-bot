@@ -3,6 +3,7 @@ import asyncio
 import time
 import contextlib
 import logging
+import telegram.error
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
@@ -53,37 +54,57 @@ async def process_video(update: Update, text: str):
 
         async def updater():
             last_text = ""
-
+            last_edit = 0
+            last_percent = -1
+        
             try:
                 while True:
                     now = time.time()
+        
                     delta = now - state["last_time"]
-
+        
                     estimated = state["downloaded"] + state["speed"] * delta
                     total = state["total"]
-
+        
                     percent = min(int(estimated / total * 100), 100)
-
+        
+                    # 🔥 анти-спам процентов
+                    if percent == last_percent:
+                        await asyncio.sleep(0.6)
+                        continue
+        
+                    last_percent = percent
+        
+                    # 🔥 анти-спам Telegram
+                    if now - last_edit < 1.3:
+                        await asyncio.sleep(0.4)
+                        continue
+        
+                    last_edit = now
+        
                     filled = percent // 10
                     bar = "█" * filled + "░" * (10 - filled)
-
+        
                     speed_mb = state["speed"] / 1024 / 1024 if state["speed"] else 0
-
+        
                     text = (
                         f"⬇️ Скачивание...\n\n"
                         f"{bar} {percent}%\n"
                         f"⚡ {speed_mb:.2f} MB/s"
                     )
-
-                    if text != last_text:
-                        try:
-                            await msg.edit_text(text)
-                            last_text = text
-                        except:
-                            pass
-
+        
+                    try:
+                        await msg.edit_text(text)
+                        last_text = text
+        
+                    except telegram.error.RetryAfter as e:
+                        await asyncio.sleep(e.retry_after)
+        
+                    except Exception:
+                        pass
+        
                     await asyncio.sleep(0.5)
-
+        
             except asyncio.CancelledError:
                 return
             except Exception as e:
