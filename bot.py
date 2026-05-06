@@ -2,6 +2,7 @@ import os
 import re
 import asyncio
 import time
+import contextlib
 
 from aiohttp import web
 from telegram import Update
@@ -30,7 +31,15 @@ async def handle_message(update, context):
     if "tiktok.com" not in text:
         return
 
-    asyncio.create_task(process_video(update, context, text))
+    task = asyncio.create_task(process_video(update, context, text))
+
+    def log_task_result(t):
+        try:
+            t.result()
+        except Exception as e:
+            print("TASK ERROR:", e)
+    
+    task.add_done_callback(log_task_result)
     
 async def process_video(update, context, text):
     await asyncio.sleep(0.3)
@@ -52,37 +61,41 @@ async def process_video(update, context, text):
 
         async def updater():
             last_text = ""
+            try:
+                while True:
+                    now = time.time()
+    
+                    delta = now - state["last_update"]
+    
+                    estimated = state["downloaded"] + state["speed"] * delta
+                    total = state["total"]
             
-            while True:
-                now = time.time()
-
-                delta = now - state["last_update"]
-
-                estimated = state["downloaded"] + state["speed"] * delta
-                total = state["total"]
-        
-                percent = min(estimated / total * 100, 100)
-
-                filled = int(percent // 10)
-                bar = "█" * filled + "░" * (10 - filled)
-        
-                # скорость
-                speed_mb = state["speed"] / 1024 / 1024
-                
-                text = (
-                    f"⬇️ Скачивание...\n\n"
-                    f"{bar} {percent:.1f}%\n"
-                    f"⚡ {speed_mb:.2f} MB/s"
-                )
-
-                if text != last_text:
-                    try:
-                        await msg.edit_text(text)
-                        last_text = text
-                    except:
-                        pass
-        
-                await asyncio.sleep(0.3)
+                    percent = min(estimated / total * 100, 100)
+    
+                    filled = int(percent // 10)
+                    bar = "█" * filled + "░" * (10 - filled)
+            
+                    # скорость
+                    speed_mb = state["speed"] / 1024 / 1024
+                    
+                    text = (
+                        f"⬇️ Скачивание...\n\n"
+                        f"{bar} {percent:.1f}%\n"
+                        f"⚡ {speed_mb:.2f} MB/s"
+                    )
+    
+                    if text != last_text:
+                        try:
+                            await msg.edit_text(text)
+                            last_text = text
+                        except:
+                            pass
+            
+                    await asyncio.sleep(0.3)
+            except asyncio.CancelledError:
+                return
+            except Exception as e:
+                print("UPDATER ERROR:", e)     
                 
         task = asyncio.create_task(updater())
 
@@ -94,10 +107,8 @@ async def process_video(update, context, text):
             )
 
             task.cancel()
-            try:
+            with contextlib.suppress(Exception):
                 await task
-            except:
-                pass
                 
             with open(file_path, "rb") as video:
                 await update.message.reply_video(video=video)
