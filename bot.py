@@ -34,26 +34,53 @@ async def process_video(update, context, text):
     async with semaphore:  # 🔥 ограничение
         msg = await update.message.reply_text("⬇️ Скачивание...")
 
-        state = {"percent": "0%", "speed": "0.00 MB/s"}
+        state = {
+            "downloaded": 0,
+            "total": 1,
+            "speed": 0,
+            "last_update": asyncio.get_event_loop().time()
+        }
 
-        def progress_callback(p, speed):
-            if p:
-                state["percent"] = p
-            if speed:
-                state["speed"] = speed
+        def progress_callback(downloaded, total, speed):
+            state["downloaded"] = downloaded
+            state["total"] = total or 1
+            state["speed"] = speed or 0
+            state["last_update"] = asyncio.get_event_loop().time()
 
         async def updater():
+            last_text = ""
+            
             while True:
-                try:
-                    await msg.edit_text(
-                        f"⬇️ Скачивание...\n\n"
-                        f"{render_bar(state['percent'])}\n"
-                        f"⚡ {state['speed']}"
-                    )
-                except:
-                    pass
-                await asyncio.sleep(1)
+                now = asyncio.get_event_loop().time()
 
+                delta = now - state["last_update"]
+
+                estimated = state["downloaded"] + state["speed"] * delta
+                total = state["total"]
+        
+                percent = min(estimated / total * 100, 100)
+
+                filled = int(percent // 10)
+                bar = "█" * filled + "░" * (10 - filled)
+        
+                # скорость
+                speed_mb = state["speed"] / 1024 / 1024
+                
+                text = (
+                    f"⬇️ Скачивание...\n\n"
+                    f"{bar} {percent:.1f}%\n"
+                    f"⚡ {speed_mb:.2f} MB/s"
+                )
+
+                if text != last_text:
+                    try:
+                        await msg.edit_text(text)
+                        last_text = text
+                    except:
+                        pass
+        
+                await asyncio.sleep(0.3)
+                
         task = asyncio.create_task(updater())
 
         try:
