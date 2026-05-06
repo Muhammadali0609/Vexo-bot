@@ -117,14 +117,13 @@ app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 async def main():
     await app.initialize()
 
-    
-
-    await app.bot.set_webhook(url=WEBHOOK_URL)
+    await app.bot.set_webhook(WEBHOOK_URL)
 
     await app.start()
 
-    print("Webhook bot started")
+    print("Bot started")
 
     await asyncio.Event().wait()
+    
 if __name__ == "__main__":
     asyncio.run(main())
