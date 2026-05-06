@@ -1,7 +1,6 @@
 import os
 import asyncio
 
-from flask import Flask, request
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
@@ -14,10 +13,6 @@ semaphore = asyncio.Semaphore(2)
 
 # 🔥 создаём Telegram приложение
 app = ApplicationBuilder().token(TOKEN).build()
-
-# 🔥 Flask сервер (для webhook)
-flask_app = Flask(__name__)
-
 
 # 🔥 обработка сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -55,39 +50,21 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, url:
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 
-# 🔥 webhook endpoint
-@flask_app.route("/webhook", methods=["POST"])
-def webhook():
-    data = request.get_json(force=True)
-    update = Update.de_json(data, app.bot)
-    # 💎 ВАЖНО: используем СУЩЕСТВУЮЩИЙ loop, не создаём новый
-    asyncio.get_event_loop().create_task(app.process_update(update))
-    return "ok"
-
-@flask_app.route("/")
-def home():
-    return "OK"
+async def main():
+    await app.initialize()
     
-def main():
-    import threading
-    async def setup():
-        await app.initialize()
-        await app.bot.delete_webhook(drop_pending_updates=True)
-        await app.bot.set_webhook(WEBHOOK_URL)
-        print("🚀 webhook set")
+    await app.bot.delete_webhook(drop_pending_updates=True)
+    await app.bot.set_webhook(WEBHOOK_URL)
+    print("🚀 Bot started")
 
-    asyncio.run(setup())
+    await app.updater.start_webhook(
+        listen="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000)),
+        url_path="webhook",
+        webhook_url=WEBHOOK_URL
+    )
 
-    port = int(os.environ.get("PORT", 10000))
-
-    threading.Thread(
-        target=lambda: flask_app.run(host="0.0.0.0", port=port),
-        daemon=True
-    ).start()
-
-    print("🚀 bot running")
-
-    asyncio.get_event_loop().run_forever()
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
