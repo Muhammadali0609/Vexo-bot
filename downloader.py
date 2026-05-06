@@ -1,4 +1,5 @@
 import os
+import time
 import yt_dlp
 
 BASE_DIR = os.path.dirname(__file__)
@@ -7,62 +8,85 @@ DOWNLOADS_DIR = os.path.join(BASE_DIR, "downloads")
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
 
-def download_tiktok(url: str) -> str:
-    """
-    Универсальный downloader для:
-    - TikTok
-    - YouTube
-    - Instagram
-    """
+# 🔥 базовые настройки (общие для всех)
+BASE_OPTS = {
+    "outtmpl": os.path.join(DOWNLOADS_DIR, "%(id)s.%(ext)s"),
+    "quiet": True,
+    "noplaylist": True,
 
-    ydl_opts = {
-        # 📁 куда сохраняем
-        "outtmpl": os.path.join(DOWNLOADS_DIR, "%(id)s.%(ext)s"),
+    # стабильность
+    "retries": 5,
+    "fragment_retries": 5,
+    "socket_timeout": 30,
 
-        # 🎬 лучший mp4
-        "format": "best[ext=mp4]/best",
+    # меньше ошибок SSL
+    "nocheckcertificate": True,
+}
 
-        # 🔕 без логов
-        "quiet": True,
-        "noplaylist": True,
 
-        # 🌐 стабильность сети
-        "retries": 10,
-        "fragment_retries": 10,
-        "socket_timeout": 40,
-        "extractor_retries": 5,
+# 🔥 TikTok
+TIKTOK_OPTS = {
+    **BASE_OPTS,
+    "format": "best[ext=mp4]/best",
+    "http_headers": {
+        "User-Agent": "Mozilla/5.0"
+    },
+}
 
-        # 🔐 анти-блок (очень важно для TikTok/Instagram)
-        "http_headers": {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0 Safari/537.36"
-            )
-        },
 
-        # ⚙️ стабильность парсинга
-        "nocheckcertificate": True,
+# 🔥 Instagram
+INSTAGRAM_OPTS = {
+    **BASE_OPTS,
+    "format": "best",
+    "http_headers": {
+        "User-Agent": "Mozilla/5.0"
+    },
+    # можно добавить cookies позже
+}
 
-        # 📉 убирает лишние зависания
-        "concurrent_fragment_downloads": 2,
-    }
+
+# 🔥 YouTube
+YOUTUBE_OPTS = {
+    **BASE_OPTS,
+    "format": "bestvideo+bestaudio/best",
+    "merge_output_format": "mp4",
+}
+
+
+# 🔥 определяем платформу
+def get_opts(url: str):
+    url = url.lower()
+
+    if "tiktok.com" in url:
+        return TIKTOK_OPTS
+
+    elif "instagram.com" in url:
+        return INSTAGRAM_OPTS
+
+    elif "youtube.com" in url or "youtu.be" in url:
+        return YOUTUBE_OPTS
+
+    else:
+        return BASE_OPTS
+
+
+# 🔥 главная функция
+def download_video(url: str):
+    opts = get_opts(url)
 
     last_error = None
 
-    # 🔁 несколько попыток (очень важно для TikTok/IG)
-    for i in range(3):
+    for i in range(3):  # 3 попытки
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            with yt_dlp.YoutubeDL(opts) as ydl:
                 info = ydl.extract_info(url, download=True)
-
-                # получаем путь к файлу
-                file_path = ydl.prepare_filename(info)
-
-                return file_path
+                return ydl.prepare_filename(info)
 
         except Exception as e:
             last_error = e
-            print(f"[Downloader] retry {i + 1}: {e}")
+            print(f"[Downloader] Retry {i+1}: {e}")
 
-    raise Exception(f"Download failed after retries: {last_error}")
+            # небольшая задержка
+            time.sleep(1.5 * (i + 1))
+
+    raise Exception(f"Download failed: {last_error}")
