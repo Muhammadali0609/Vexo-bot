@@ -64,28 +64,24 @@ def webhook():
     asyncio.run(app.process_update(update))
     return "ok"
 
-
-# 🔥 запуск
-async def main():
-    await app.initialize()
-
-    await app.bot.delete_webhook(drop_pending_updates=True)
-    await app.bot.set_webhook(url=WEBHOOK_URL)
-
-    print("🚀 Webhook установлен")
-    print("🚀 Bot started")
-    print("WEBHOOK URL:", WEBHOOK_URL)
-    # Flask запускаем в отдельном потоке, чтобы не блокировать asyncio
-    import threading
-
-    def run_flask():
-        port = int(os.environ.get("PORT", 10000))
-        flask_app.run(host="0.0.0.0", port=port)
-
-    threading.Thread(target=run_flask, daemon=True).start()
-
-    # держим процесс живым
-    await asyncio.Event().wait()
+@flask_app.route("/", methods=["GET"])
+def home():
+    return "Bot is running"
     
+def start_bot():
+    async def setup():
+        await app.initialize()
+        await app.bot.delete_webhook(drop_pending_updates=True)
+        await app.bot.set_webhook(url=WEBHOOK_URL)
+        print("🚀 Webhook set")
+
+    asyncio.run(setup())
+
+def main():
+    start_bot()
+    port = int(os.environ.get("PORT", 10000))
+    print("🚀 Flask starting on port", port)
+    flask_app.run(host="0.0.0.0", port=port)
+
 if __name__ == "__main__":
     main()
