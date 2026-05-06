@@ -1,68 +1,81 @@
 import os
 import asyncio
 
+from flask import Flask, request
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-from config import TOKEN
-from downloader import download_tiktok  # используем как универсальный downloader
-
-lock = asyncio.Lock()
+from config import TOKEN, WEBHOOK_URL
+from downloader import download_video
 
 
-def is_supported_url(text: str) -> bool:
-    return any(domain in text for domain in [
-        "tiktok.com",
-        "youtube.com",
-        "youtu.be",
-        "instagram.com"
-    ])
+# 🔥 лимит параллельных загрузок
+semaphore = asyncio.Semaphore(2)
+
+# 🔥 создаём Telegram приложение
+app = ApplicationBuilder().token(TOKEN).build()
+
+# 🔥 Flask сервер (для webhook)
+flask_app = Flask(__name__)
 
 
+# 🔥 обработка сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
-    if not text or not is_supported_url(text):
+    if not text:
         return
 
-    asyncio.create_task(process_video(update, text))
+    if not any(x in text for x in ["tiktok.com", "instagram.com", "youtube.com", "youtu.be"]):
+        return
+
+    asyncio.create_task(process_video(update, context, text))
 
 
-async def process_video(update: Update, text: str):
-    async with lock:
+# 🔥 скачивание
+async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, url: str):
+    async with semaphore:
         msg = await update.message.reply_text("⏳")
 
         try:
-            # 🔥 скачивание в отдельном потоке
-            file_path = await asyncio.to_thread(download_tiktok, text)
+            file_path = await asyncio.to_thread(download_video, url)
 
-            # отправка видео
             with open(file_path, "rb") as video:
                 await update.message.reply_video(video=video)
 
-            # удалить "⏳"
             await msg.delete()
-
-            # очистка файла
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            os.remove(file_path)
 
         except Exception as e:
-            print("ERROR:", e)
-            try:
-                await msg.edit_text("❌ не удалось скачать")
-            except:
-                pass
+            print("DOWNLOAD ERROR:", e)
+            await msg.edit_text("❌ Ошибка загрузки")
 
 
-# =========================
-# 🚀 запуск
-# =========================
-
-app = ApplicationBuilder().token(TOKEN).build()
-
+# 🔥 регистрируем handler
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-print("Bot started 🚀")
 
-app.run_polling(drop_pending_updates=True)
+# 🔥 webhook endpoint
+@flask_app.route("/webhook", methods=["POST"])
+def webhook():
+    data = request.get_json(force=True)
+    update = Update.de_json(data, app.bot)
+
+    asyncio.run(app.process_update(update))
+    return "ok"
+
+
+# 🔥 запуск
+def main():
+    # ставим webhook
+    app.bot.set_webhook(url=WEBHOOK_URL)
+
+    print("🚀 Webhook бот запущен")
+
+    # 🔥 Render автоматически даст PORT
+    port = int(os.environ.get("PORT", 10000))
+    flask_app.run(host="0.0.0.0", port=port)
+
+
+if __name__ == "__main__":
+    main()
