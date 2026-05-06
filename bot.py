@@ -1,169 +1,68 @@
 import os
 import asyncio
-import time
-import contextlib
-import logging
-import telegram.error
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
 from config import TOKEN
-from downloader import download_tiktok
+from downloader import download_tiktok  # используем как универсальный downloader
 
-# ---------------- SETTINGS ----------------
-
-semaphore = asyncio.Semaphore(2)
-
-logging.basicConfig(level=logging.INFO)
+lock = asyncio.Lock()
 
 
-# ---------------- HANDLER ----------------
+def is_supported_url(text: str) -> bool:
+    return any(domain in text for domain in [
+        "tiktok.com",
+        "youtube.com",
+        "youtu.be",
+        "instagram.com"
+    ])
+
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        text = update.message.text
+    text = update.message.text
 
-        if "tiktok.com" not in text:
-            return
+    if not text or not is_supported_url(text):
+        return
 
-        asyncio.create_task(process_video(update, text))
+    asyncio.create_task(process_video(update, text))
 
-    except Exception as e:
-        print("HANDLER ERROR:", e)
-
-
-# ---------------- PROCESS ----------------
 
 async def process_video(update: Update, text: str):
-    async with semaphore:
-        msg = await update.message.reply_text("⬇️ Скачивание...")
-
-        state = {
-            "downloaded": 0,
-            "total": 1,
-            "speed": 0,
-            "last_time": time.time()
-        }
-
-        def progress(downloaded, total, speed):
-            state["downloaded"] = downloaded
-            state["total"] = total or 1
-            state["speed"] = speed or 0
-            state["last_time"] = time.time()
-
-        async def updater():
-            last_text = ""
-            last_edit = 0
-            last_percent = -1
-        
-            try:
-                while True:
-                    now = time.time()
-        
-                    delta = now - state["last_time"]
-        
-                    estimated = state["downloaded"] + state["speed"] * delta
-                    total = state["total"]
-        
-                    percent = min(int(estimated / total * 100), 100)
-        
-                    # 🔥 анти-спам процентов
-                    if percent == last_percent:
-                        await asyncio.sleep(0.6)
-                        continue
-        
-                    last_percent = percent
-        
-                    # 🔥 анти-спам Telegram
-                    if now - last_edit < 1.3:
-                        await asyncio.sleep(0.4)
-                        continue
-        
-                    last_edit = now
-        
-                    filled = percent // 10
-                    bar = "█" * filled + "░" * (10 - filled)
-        
-                    speed_mb = state["speed"] / 1024 / 1024 if state["speed"] else 0
-        
-                    text = (
-                        f"⬇️ Скачивание...\n\n"
-                        f"{bar} {percent}%\n"
-                        f"⚡ {speed_mb:.2f} MB/s"
-                    )
-        
-                    try:
-                        await msg.edit_text(text)
-                        last_text = text
-        
-                    except telegram.error.RetryAfter as e:
-                        await asyncio.sleep(e.retry_after)
-        
-                    except Exception:
-                        pass
-        
-                    await asyncio.sleep(0.5)
-        
-            except asyncio.CancelledError:
-                return
-            except Exception as e:
-                print("UPDATER ERROR:", e)
-
-        task = asyncio.create_task(updater())
+    async with lock:
+        msg = await update.message.reply_text("⏳")
 
         try:
-            file_path = await asyncio.to_thread(
-                download_tiktok,
-                text,
-                progress
-            )
+            # 🔥 скачивание в отдельном потоке
+            file_path = await asyncio.to_thread(download_tiktok, text)
 
-            task.cancel()
-            with contextlib.suppress(Exception):
-                await task
-
+            # отправка видео
             with open(file_path, "rb") as video:
                 await update.message.reply_video(video=video)
 
+            # удалить "⏳"
             await msg.delete()
-            os.remove(file_path)
+
+            # очистка файла
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
         except Exception as e:
-            task.cancel()
-            print("PROCESS ERROR:", e)
-
+            print("ERROR:", e)
             try:
-                await msg.edit_text("❌ Ошибка загрузки")
+                await msg.edit_text("❌ не удалось скачать")
             except:
                 pass
 
 
-# ---------------- BOT INIT ----------------
+# =========================
+# 🚀 запуск
+# =========================
 
-def run():
-    while True:
-        try:
-            app = ApplicationBuilder().token(TOKEN).build()
+app = ApplicationBuilder().token(TOKEN).build()
 
-            app.add_handler(
-                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
-            )
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-            print("🚀 Bot started")
+print("Bot started 🚀")
 
-            app.run_polling(
-                drop_pending_updates=True,
-                timeout=30,
-                poll_interval=1
-            )
-
-        except Exception as e:
-            print("💥 BOT CRASHED:", e)
-            time.sleep(5)
-
-
-# ---------------- START ----------------
-
-if __name__ == "__main__":
-    run()
+app.run_polling(drop_pending_updates=True)
