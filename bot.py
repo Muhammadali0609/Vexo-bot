@@ -114,12 +114,25 @@ app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
+async def webhook_handler(request):
+    data = await request.json()
+    update = Update.de_json(data, app.bot)
+    await app.process_update(update)
+    return web.Response()
+
 async def main():
     await app.initialize()
-
     await app.bot.set_webhook(WEBHOOK_URL)
 
-    await app.start()
+    server = web.Application()
+    server.router.add_post("/webhook", webhook_handler)
+
+    runner = web.AppRunner(server)
+    await runner.setup()
+
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
 
     print("Bot started")
 
