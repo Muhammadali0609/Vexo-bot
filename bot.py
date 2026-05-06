@@ -1,6 +1,7 @@
 import os
 import re
 import asyncio
+import time
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
@@ -38,20 +39,20 @@ async def process_video(update, context, text):
             "downloaded": 0,
             "total": 1,
             "speed": 0,
-            "last_update": asyncio.get_event_loop().time()
+            "last_update": time.time()
         }
 
         def progress_callback(downloaded, total, speed):
             state["downloaded"] = downloaded
             state["total"] = total or 1
             state["speed"] = speed or 0
-            state["last_update"] = asyncio.get_event_loop().time()
+            state["last_update"] = time.time()
 
         async def updater():
             last_text = ""
             
             while True:
-                now = asyncio.get_event_loop().time()
+                now = time.time()
 
                 delta = now - state["last_update"]
 
@@ -91,7 +92,11 @@ async def process_video(update, context, text):
             )
 
             task.cancel()
-
+            try:
+                await task
+            except:
+                pass
+                
             with open(file_path, "rb") as video:
                 await update.message.reply_video(video=video)
 
