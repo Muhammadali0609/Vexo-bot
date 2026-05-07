@@ -43,3 +43,17 @@ def add_user(user_id: int):
 def get_users_count():
     cursor.execute("SELECT COUNT(*) FROM users")
     return cursor.fetchone()[0]
+    
+def add_event(user_id, url, platform, status="pending"):
+    cursor.execute("""
+        INSERT INTO events (user_id, url, platform, status)
+        VALUES (%s, %s, %s, %s)
+    """, (user_id, url, platform, status))
+
+
+def update_event_status(event_id, status):
+    cursor.execute("""
+        UPDATE events
+        SET status = %s
+        WHERE id = %s
+    """, (status, event_id))
