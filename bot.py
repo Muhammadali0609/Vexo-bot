@@ -15,8 +15,13 @@ semaphore = asyncio.Semaphore(2)
 app = ApplicationBuilder().token(TOKEN).build()
 
 def register_user(update):
-    user_id = update.effective_user.id
-    add_user(user_id)
+    user = update.effective_user
+
+    user_id = user.id
+    username = user.username
+    first_name = user.first_name
+
+    add_user(user_id, username, first_name)
     
 def is_valid_link(text: str):
     if not text:
