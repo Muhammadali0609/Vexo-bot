@@ -3,7 +3,7 @@ import asyncio
 
 from telegram import Update
 from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
-
+from db import add_user, get_users_count
 from config import TOKEN, WEBHOOK_URL
 from downloader import download_video
 
