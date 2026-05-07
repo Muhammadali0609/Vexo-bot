@@ -2,7 +2,7 @@ import os
 import asyncio
 
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
+from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
 
 from config import TOKEN, WEBHOOK_URL
 from downloader import download_video
