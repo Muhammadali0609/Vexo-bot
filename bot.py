@@ -53,9 +53,10 @@ async def handle_message(update, context):
 async def process_video(update, context, text, user_id, platform):
     async with semaphore:
         msg = await update.message.reply_text("⏳")
-
         try:
-            file_path = await asyncio.to_thread(download_video, url)
+            file_path = await asyncio.to_thread(download_video, text)
+            if not file_path:
+                raise Exception("Empty file path")
 
             with open(file_path, "rb") as video:
                 await update.message.reply_video(video=video)
@@ -63,12 +64,12 @@ async def process_video(update, context, text, user_id, platform):
             await msg.delete()
             os.remove(file_path)
             add_event(user_id, text, platform, "success")
+
         except Exception as e:
-            print("DOWNLOAD ERROR:", e)
+            print("DOWNLOAD ERROR:", repr(e))
             await msg.edit_text("❌ Ошибка загрузки")
             add_event(user_id, text, platform, "error")
-
-
+            
 # 🔥 регистрируем handler
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 app.add_handler(CommandHandler("adminm", adminm))
