@@ -6,7 +6,7 @@ from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,Callb
 from db import add_user, get_users_count, add_event
 from config import TOKEN, WEBHOOK_URL
 from downloader import download_video
-
+from db import migrate
 from admin import adminm, admin_callback
 
 # 🔥 лимит параллельных загрузок
@@ -96,6 +96,7 @@ async def post_init(app):
     print("🚀 webhook set")
 
 def main():
+    migrate()
     port = int(os.environ.get("PORT", 10000))
     app.post_init = post_init
     app.run_webhook(
