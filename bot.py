@@ -7,7 +7,10 @@ from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filte
 from config import TOKEN, WEBHOOK_URL
 from downloader import download_video
 
+from admin import adminm, admin_callback
 
+app.add_handler(CommandHandler("adminm", adminm))
+app.add_handler(CallbackQueryHandler(admin_callback))
 # 🔥 лимит параллельных загрузок
 semaphore = asyncio.Semaphore(2)
 
