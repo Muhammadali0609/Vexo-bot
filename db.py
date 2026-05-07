@@ -13,6 +13,8 @@ cursor = conn.cursor()
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
     user_id BIGINT PRIMARY KEY,
+    username TEXT,
+    first_name TEXT,
     first_seen TIMESTAMP,
     last_seen TIMESTAMP
 )
