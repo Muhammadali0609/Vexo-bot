@@ -9,18 +9,6 @@ conn.autocommit = True
 
 cursor = conn.cursor()
 
-def migrate():
-    cursor.execute("""
-    ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS username TEXT;
-    """)
-
-    cursor.execute("""
-    ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS first_name TEXT;
-    """)
-
-    conn.commit()
 
 # таблица пользователей
 cursor.execute("""
