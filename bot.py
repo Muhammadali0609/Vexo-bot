@@ -5,7 +5,6 @@ from telegram import Update
 from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
 from db import add_user, get_users_count, add_event
 from config import TOKEN, WEBHOOK_URL
-from downloader import download_video
 from admin import adminm, admin_callback
 from downloader_engine import download_manager, safe_remove
 
