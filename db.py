@@ -9,6 +9,20 @@ conn.autocommit = True
 
 cursor = conn.cursor()
 
+def migrate_video_cache():
+    # добавляем колонку если её нет
+    cursor.execute("""
+        ALTER TABLE video_cache
+        ADD COLUMN IF NOT EXISTS file_id TEXT;
+    """)
+
+    # если раньше был file_path — можно оставить или удалить
+    cursor.execute("""
+        ALTER TABLE video_cache
+        DROP COLUMN IF EXISTS file_path;
+    """)
+
+    conn.commit()
 
 # таблица пользователей
 cursor.execute("""
