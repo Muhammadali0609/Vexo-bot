@@ -9,8 +9,6 @@ from downloader import download_video
 
 from admin import adminm, admin_callback
 
-app.add_handler(CommandHandler("adminm", adminm))
-app.add_handler(CallbackQueryHandler(admin_callback))
 # 🔥 лимит параллельных загрузок
 semaphore = asyncio.Semaphore(2)
 
@@ -51,7 +49,8 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, url:
 
 # 🔥 регистрируем handler
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
+app.add_handler(CommandHandler("adminm", adminm))
+app.add_handler(CallbackQueryHandler(admin_callback))
 
 async def post_init(app):
     await app.bot.delete_webhook(drop_pending_updates=True)
