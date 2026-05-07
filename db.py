@@ -44,6 +44,15 @@ def add_user(user_id, username=None, first_name=None):
         last_seen = EXCLUDED.last_seen
     """, (user_id, username, first_name, now, now))
 
+def get_users(offset=0, limit=10):
+    cursor.execute("""
+        SELECT user_id, username, first_name
+        FROM users
+        ORDER BY last_seen DESC
+        LIMIT %s OFFSET %s
+    """, (limit, offset))
+
+    return cursor.fetchall()
 
 def get_users_count():
     cursor.execute("SELECT COUNT(*) FROM users")
