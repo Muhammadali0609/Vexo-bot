@@ -21,7 +21,8 @@ def build_users_page(page: int):
     offset = page * PAGE_SIZE
     users = get_users(offset, PAGE_SIZE)
 
-    text = f"👥 Users (page {page + 1})\n\n"
+    total_users = get_users_count()
+    text = f"👥 Users {total_users} (page {page + 1})\n\n"
 
     keyboard = []
     for i, user in enumerate(users, start=1 + offset):
