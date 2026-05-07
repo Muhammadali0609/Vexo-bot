@@ -62,10 +62,11 @@ async def process_video(update, context, text, user_id, platform):
 
             await msg.delete()
             os.remove(file_path)
-
+            add_event(user_id, text, platform, "success")
         except Exception as e:
             print("DOWNLOAD ERROR:", e)
             await msg.edit_text("❌ Ошибка загрузки")
+            add_event(user_id, text, platform, "error")
 
 
 # 🔥 регистрируем handler
