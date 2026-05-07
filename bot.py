@@ -7,6 +7,7 @@ from db import add_user, get_users_count, add_event
 from config import TOKEN, WEBHOOK_URL
 from downloader import download_video
 from admin import adminm, admin_callback
+from downloader_engine import download_manager, safe_remove
 
 # 🔥 лимит параллельных загрузок
 semaphore = asyncio.Semaphore(2)
@@ -71,12 +72,14 @@ async def process_video(update, context, text, user_id, platform):
     async with semaphore:
         msg = await update.message.reply_text("⏳")
         try:
-            file_path = await asyncio.to_thread(download_video, text)
+            file_path = await download_manager(text, platform)
             if not file_path:
-                raise Exception("Empty file path")
+                await update.message.reply_text("⚠️ Видео сейчас недоступно, попробуйте позже")
+                return
 
             with open(file_path, "rb") as video:
                 await update.message.reply_video(video=video)
+            safe_remove(file_path)
 
             await msg.delete()
             os.remove(file_path)
