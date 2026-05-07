@@ -101,5 +101,15 @@ async def admin_callback(update, context):
             text,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
-    elif query.data == "users":
-        await query.edit_message_text("👤 Пользователи системы")
+    elif query.data.startswith("users:"):
+        page = int(query.data.split(":")[1])
+        text, markup = build_users_page(page)
+        await query.edit_message_text(
+            text=text,
+            reply_markup=markup
+        )
+    elif query.data == "back":
+    await query.edit_message_text(
+        "🔐 Admin Panel",
+        reply_markup=admin_menu_keyboard()
+    )
