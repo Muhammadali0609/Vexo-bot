@@ -21,7 +21,9 @@ def build_users_page(page: int):
 
         name = first_name if first_name else (username or "NoName")
 
-        text += f"{i}. {name} | {user_id}\n"
+        link = f"tg://user?id={user_id}"
+
+        text += f'{i}. <a href="{link}">{name}</a> | {user_id}\n'
 
     keyboard = []
 
