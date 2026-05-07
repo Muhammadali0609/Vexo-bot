@@ -19,6 +19,15 @@ def register_user(update):
     user_id = update.effective_user.id
     add_user(user_id)
     
+def detect_platform(text: str):
+    if "tiktok.com" in text:
+        return "tiktok"
+    if "youtube.com" in text or "youtu.be" in text:
+        return "youtube"
+    if "instagram.com" in text:
+        return "instagram"
+    return "unknown"
+    
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     register_user(update)
     await update.message.reply_text(
@@ -26,20 +35,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📥 Send TikTok / YouTube / Instagram link"
     )
 # 🔥 обработка сообщений
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_message(update, context):
     register_user(update)
     text = update.message.text or ""
-    # 1. игнорируем команды (ВАЖНО)
-    if text.startswith("/"):
+
+    if not any(x in text for x in ["tiktok.com", "youtube.com", "youtu.be", "instagram.com"]):
         return
-    # 2. список поддерживаемых платформ
-    platforms = ("tiktok.com", "instagram.com", "youtube.com", "youtu.be")
-    # 3. проверяем есть ли ссылка
-    if not any(domain in text for domain in platforms):
-        return
-    # 4. запускаем загрузку
-    asyncio.create_task(process_video(update, context, text))
-# 🔥 скачивание
+
+    user_id = update.effective_user.id
+    platform = detect_platform(text)
+
+    # 🔥 создаём запись события (pending)
+    add_event(user_id, text, platform, "pending")
+
+    asyncio.create_task(process_video(update, context, text, user_id, platform))
+    
 async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, url: str):
     async with semaphore:
         msg = await update.message.reply_text("⏳")
