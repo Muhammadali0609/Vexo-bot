@@ -70,8 +70,7 @@ def download_youtube(url):
     ydl_opts = {
         **COMMON_OPTS,
         "format": "best",
-        "merge_output_format": "mp4",
-        "cookiefile": "cookies.txt",
+        "cookiefile": os.path.join(BASE_DIR, "cookies.txt"),
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
