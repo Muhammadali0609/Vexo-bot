@@ -17,6 +17,8 @@ app = ApplicationBuilder().token(TOKEN).build()
 
 # 🔥 обработка сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    add_user(user_id)
     text = update.message.text or ""
     # 1. игнорируем команды (ВАЖНО)
     if text.startswith("/"):
