@@ -40,6 +40,20 @@ def build_users_page(page: int):
 
     return text, InlineKeyboardMarkup(keyboard)
 
+async def admin_callback(update, context):
+    query = update.callback_query
+    await query.answer()
+    data = query.data
+
+    # 👥 USERS PAGINATION
+    if data.startswith("users:"):
+        page = int(data.split(":")[1])
+        text, markup = build_users_page(page)
+        await query.edit_message_text(
+            text=text,
+            reply_markup=markup
+        )
+
 def is_admin(user_id: int) -> bool:
     return user_id in ADMINS
 
