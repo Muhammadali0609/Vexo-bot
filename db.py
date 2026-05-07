@@ -31,15 +31,18 @@ CREATE TABLE IF NOT EXISTS events (
 )
 """)
 
-def add_user(user_id: int):
+def add_user(user_id, username=None, first_name=None):
     now = datetime.utcnow()
 
     cursor.execute("""
-    INSERT INTO users (user_id, first_seen, last_seen)
-    VALUES (%s, %s, %s)
+    INSERT INTO users (user_id, username, first_name, first_seen, last_seen)
+    VALUES (%s, %s, %s, %s, %s)
     ON CONFLICT (user_id)
-    DO UPDATE SET last_seen = EXCLUDED.last_seen
-    """, (user_id, now, now))
+    DO UPDATE SET
+        username = EXCLUDED.username,
+        first_name = EXCLUDED.first_name,
+        last_seen = EXCLUDED.last_seen
+    """, (user_id, username, first_name, now, now))
 
 
 def get_users_count():
