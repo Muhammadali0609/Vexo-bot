@@ -54,19 +54,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update, context):
     register_user(update)
     text = update.message.text or ""
+    # 🚫 1. проверка ссылки
     if not is_valid_link(text):
-        return
-    
-    if not any(x in text for x in ["tiktok.com", "youtube.com", "youtu.be", "instagram.com"]):
         return
 
     user_id = update.effective_user.id
     platform = detect_platform(text)
-
-    # 🔥 создаём запись события (pending)
+    # 📊 2. лог события
     add_event(user_id, text, platform, "pending")
-
-    asyncio.create_task(process_video(update, context, text, user_id, platform))
+    # 🚀 3. запускаем обработку
+    asyncio.create_task(
+        process_video(update, context, text, user_id, platform)
+    )
     
 async def process_video(update, context, text, user_id, platform):
     async with semaphore:
