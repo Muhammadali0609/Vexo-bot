@@ -74,7 +74,7 @@ async def process_video(update, context, text, user_id, platform):
         try:
             file_path = await download_manager(text, platform)
             if not file_path:
-                await update.message.reply_text("⚠️ Видео сейчас недоступно, попробуйте позже")
+                await msg.edit_text("⚠️ Видео сейчас недоступно, попробуйте позже")
                 return
 
             with open(file_path, "rb") as video:
