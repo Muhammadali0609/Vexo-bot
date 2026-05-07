@@ -68,30 +68,25 @@ async def handle_message(update, context):
     
 async def process_video(update, context, url, user_id, platform):
     msg = await update.message.reply_text("⏳")
-    try:
-        # 🧠 1. CACHE CHECK (Telegram file_id)
-        file_id = get_cached_video(url)
 
+    try:
+        # 🧠 1. CACHE CHECK (file_id)
+        file_id = get_cached_video(url)
         if file_id:
             await update.message.reply_video(video=file_id)
             await msg.delete()
             return
-
-        # 🚀 2. DOWNLOAD
+        # 🚀 2. DOWNLOAD (only first time)
         file_path = await download_manager(url, platform)
-
         if not file_path:
             await msg.edit_text("⚠️ Video not available")
             return
-
         # 📤 3. SEND TO TELEGRAM
         with open(file_path, "rb") as video:
             sent_msg = await update.message.reply_video(video=video)
-
         # 💾 4. SAVE file_id
         file_id = sent_msg.video.file_id
         save_cached_video(url, file_id, platform)
-
         await msg.delete()
 
     except Exception as e:
