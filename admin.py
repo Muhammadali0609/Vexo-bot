@@ -11,11 +11,13 @@ PAGE_SIZE = 10
 ADMINS = {1648220477}  # добавляешь свои ID
 
 def build_users_page(page: int):
+    user_buttons = []
     offset = page * PAGE_SIZE
     users = get_users(offset, PAGE_SIZE)
 
     text = f"👥 Users (page {page + 1})\n\n"
 
+    keyboard = []
     for i, user in enumerate(users, start=1 + offset):
         user_id, username, first_name = user
 
@@ -25,7 +27,14 @@ def build_users_page(page: int):
 
         text += f'{i}. <a href="{link}">{name}</a> | {user_id}\n'
 
-    keyboard = []
+        user_buttons.append(
+            InlineKeyboardButton(
+                str(i),
+                callback_data=f"user:{user_id}:{page}"
+            )
+        )
+
+    keyboard.append(user_buttons)
 
     nav = []
 
@@ -46,19 +55,6 @@ def build_users_page(page: int):
 
     return text, InlineKeyboardMarkup(keyboard)
 
-async def admin_callback(update, context):
-    query = update.callback_query
-    await query.answer()
-    data = query.data
-
-    # 👥 USERS PAGINATION
-    if data.startswith("users:"):
-        page = int(data.split(":")[1])
-        text, markup = build_users_page(page)
-        await query.edit_message_text(
-            text=text,
-            reply_markup=markup
-        )
 
 def is_admin(user_id: int) -> bool:
     return user_id in ADMINS
