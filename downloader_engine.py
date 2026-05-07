@@ -56,30 +56,13 @@ async def try_yt_dlp_alt(url: str):
 # =========================
 # 🧠 MAIN ENGINE (FALLBACK CHAIN)
 # =========================
-async def download_manager(url: str, platform: str = "unknown"):
-    # 🧠 1. CACHE CHECK
+async def download_manager(url: str):
     cached = get_cached_video(url)
     if cached:
-        print("CACHE HIT")
-        return cached
+        return cached  # это file_id
 
-    # 🥇 2. PRIMARY
-    try:
-        file_path = await try_yt_dlp(url)
-        save_cached_video(url, file_path, platform)
-        return file_path
-    except Exception as e:
-        print("PRIMARY FAIL:", e)
-
-    # 🥈 3. ALT
-    try:
-        file_path = await try_yt_dlp_alt(url)
-        save_cached_video(url, file_path, platform)
-        return file_path
-    except Exception as e:
-        print("ALT FAIL:", e)
-
-    return None
+    file_path = await try_yt_dlp(url)
+    return file_path
 
 # =========================
 # 🧹 CLEANUP HELPER (optional later use)
