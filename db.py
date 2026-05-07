@@ -57,3 +57,31 @@ def update_event_status(event_id, status):
         SET status = %s
         WHERE id = %s
     """, (status, event_id))
+    
+def get_total_events():
+    cursor.execute("SELECT COUNT(*) FROM events")
+    return cursor.fetchone()[0]
+
+
+def get_today_events():
+    cursor.execute("""
+        SELECT COUNT(*) FROM events
+        WHERE created_at >= NOW() - INTERVAL '1 day'
+    """)
+    return cursor.fetchone()[0]
+
+
+def get_success_count():
+    cursor.execute("""
+        SELECT COUNT(*) FROM events
+        WHERE status = 'success'
+    """)
+    return cursor.fetchone()[0]
+
+
+def get_error_count():
+    cursor.execute("""
+        SELECT COUNT(*) FROM events
+        WHERE status = 'error'
+    """)
+    return cursor.fetchone()[0]
