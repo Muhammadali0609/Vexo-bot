@@ -1,5 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from db import get_users_count
+from db import get_users_count, get_users
 from db import (
     get_total_events,
     get_today_events,
@@ -7,7 +7,38 @@ from db import (
     get_error_count
 )
 
+PAGE_SIZE = 10
 ADMINS = {1648220477}  # добавляешь свои ID
+
+def build_users_page(page: int):
+    offset = page * PAGE_SIZE
+    users = get_users(offset, PAGE_SIZE)
+
+    text = f"👥 Users (page {page + 1})\n\n"
+
+    for i, user in enumerate(users, start=1 + offset):
+        user_id, username, first_name = user
+
+        name = username if username else (first_name or "NoName")
+
+        text += f"{i}. {name} | {user_id}\n"
+
+    keyboard = []
+
+    nav = []
+
+    if page > 0:
+        nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"users:{page-1}"))
+
+    nav.append(InlineKeyboardButton("🔍 Search", callback_data="search_users"))
+
+    # если есть ещё пользователи
+    if len(users) == PAGE_SIZE:
+        nav.append(InlineKeyboardButton("➡️ Next", callback_data=f"users:{page+1}"))
+
+    keyboard.append(nav)
+
+    return text, InlineKeyboardMarkup(keyboard)
 
 def is_admin(user_id: int) -> bool:
     return user_id in ADMINS
@@ -22,7 +53,7 @@ async def adminm(update, context):
 
     keyboard = [
         [InlineKeyboardButton("📊 Статистика", callback_data="stats")],
-        [InlineKeyboardButton("👤 Пользователи", callback_data="users")],
+        [InlineKeyboardButton("👤 Пользователи", callback_data="users:0")],
     ]
 
     await update.message.reply_text(
