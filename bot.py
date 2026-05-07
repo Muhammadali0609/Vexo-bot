@@ -15,10 +15,19 @@ semaphore = asyncio.Semaphore(2)
 # 🔥 создаём Telegram приложение
 app = ApplicationBuilder().token(TOKEN).build()
 
-# 🔥 обработка сообщений
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def register_user(update):
     user_id = update.effective_user.id
     add_user(user_id)
+    
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    register_user(update)
+    await update.message.reply_text(
+        "👋 Welcome to Vexo\n\n"
+        "📥 Send TikTok / YouTube / Instagram link"
+    )
+# 🔥 обработка сообщений
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    register_user(update)
     text = update.message.text or ""
     # 1. игнорируем команды (ВАЖНО)
     if text.startswith("/"):
@@ -53,6 +62,7 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, url:
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 app.add_handler(CommandHandler("adminm", adminm))
 app.add_handler(CallbackQueryHandler(admin_callback))
+app.add_handler(CommandHandler("start", start))
 
 async def post_init(app):
     await app.bot.delete_webhook(drop_pending_updates=True)
