@@ -69,7 +69,8 @@ def download_instagram(url):
 def download_youtube(url):
     ydl_opts = {
         **COMMON_OPTS,
-        "format": "best[ext=mp4]/best",
+        "format": "bv*+ba/b",
+        "merge_output_format": "mp4",
         "cookiefile": "cookies.txt",
     }
 
