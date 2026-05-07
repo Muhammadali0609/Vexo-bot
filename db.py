@@ -18,6 +18,16 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS events (
+    id SERIAL PRIMARY KEY,
+    user_id BIGINT,
+    url TEXT,
+    platform TEXT,
+    status TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+)
+""")
 
 def add_user(user_id: int):
     now = datetime.utcnow()
