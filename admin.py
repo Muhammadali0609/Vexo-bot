@@ -113,7 +113,8 @@ async def admin_callback(update, context):
         text, markup = build_users_page(page)
         await query.edit_message_text(
             text=text,
-            reply_markup=markup
+            reply_markup=markup,
+            parse_mode="HTML"
         )
     elif query.data == "back":
         await query.edit_message_text(
