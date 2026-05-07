@@ -19,6 +19,17 @@ def register_user(update):
     user_id = update.effective_user.id
     add_user(user_id)
     
+def is_valid_link(text: str):
+    if not text:
+        return False
+
+    return any(domain in text for domain in [
+        "tiktok.com",
+        "youtube.com",
+        "youtu.be",
+        "instagram.com"
+    ])
+    
 def detect_platform(text: str):
     if "tiktok.com" in text:
         return "tiktok"
@@ -38,7 +49,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update, context):
     register_user(update)
     text = update.message.text or ""
-
+    if not is_valid_link(text):
+        return
+    
     if not any(x in text for x in ["tiktok.com", "youtube.com", "youtu.be", "instagram.com"]):
         return
 
