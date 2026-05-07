@@ -146,3 +146,22 @@ def get_user_error_events(user_id):
     """, (user_id,))
 
     return cursor.fetchone()[0]
+    
+def get_cached_video(url: str):
+    cursor.execute("""
+        SELECT file_path FROM video_cache
+        WHERE url = %s
+    """, (url,))
+
+    row = cursor.fetchone()
+    return row[0] if row else None
+
+
+def save_cached_video(url: str, file_path: str, platform: str):
+    cursor.execute("""
+        INSERT INTO video_cache (url, file_path, platform)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (url) DO NOTHING
+    """, (url, file_path, platform))
+
+    conn.commit()
