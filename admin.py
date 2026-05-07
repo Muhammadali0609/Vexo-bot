@@ -1,5 +1,11 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from db import get_users_count
+from db import (
+    get_total_events,
+    get_today_events,
+    get_success_count,
+    get_error_count
+)
 
 ADMINS = {1648220477}  # добавляешь свои ID
 
