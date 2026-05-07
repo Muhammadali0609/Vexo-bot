@@ -1,4 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from db import get_users_count
 
 ADMINS = {1648220477}  # добавляешь свои ID
 
@@ -35,7 +36,16 @@ async def admin_callback(update, context):
         return
 
     if query.data == "stats":
-        await query.edit_message_text("📊 Статистика системы")
-
+        text = (
+            "📊 Статистика\n\n"
+            f"👥 Пользователей: {get_users_count()}"
+        )
+        keyboard = [
+            [InlineKeyboardButton("⬅️ Назад", callback_data="back")]
+        ]
+        await query.edit_message_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
     elif query.data == "users":
         await query.edit_message_text("👤 Пользователи системы")
