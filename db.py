@@ -21,6 +21,14 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
+CREATE TABLE IF NOT EXISTS video_cache (
+    id SERIAL PRIMARY KEY,
+    url TEXT UNIQUE,
+    file_path TEXT,
+    platform TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS events (
     id SERIAL PRIMARY KEY,
