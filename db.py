@@ -21,13 +21,15 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS video_cache (
     id SERIAL PRIMARY KEY,
     url TEXT UNIQUE,
-    file_path TEXT,
+    telegram_file_id TEXT,
     platform TEXT,
     created_at TIMESTAMP DEFAULT NOW()
-);
+)
+""")
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS events (
