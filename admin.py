@@ -6,6 +6,12 @@ from db import (
     get_success_count,
     get_error_count
 )
+from db import (
+    get_user,
+    get_user_total_events,
+    get_user_success_events,
+    get_user_error_events
+)
 
 PAGE_SIZE = 10
 ADMINS = {1648220477}  # добавляешь свои ID
