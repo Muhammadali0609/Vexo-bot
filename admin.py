@@ -124,11 +124,21 @@ async def admin_callback(update, context):
         )
     elif query.data.startswith("user:"):
         _, selected_user_id, page = query.data.split(":")
+        user = get_user(selected_user_id)
+        user_id, username, first_name = user
+        name = first_name or username or "NoName"
+        total = get_user_total_events(selected_user_id)
+        success = get_user_success_events(selected_user_id)
+        errors = get_user_error_events(selected_user_id)
 
         text = (
-            f"👤 User Card\n\n"
-            f"🆔 {selected_user_id}"
+            f"👤 {name}\n\n"
+            f"🆔 {selected_user_id}\n\n"
+            f"📥 Requests: {total}\n"
+            f"✅ Success: {success}\n"
+            f"❌ Errors: {errors}"
         )
+
         keyboard = [
             [
                 InlineKeyboardButton(
@@ -136,12 +146,14 @@ async def admin_callback(update, context):
                     callback_data=f"ban:{selected_user_id}"
                 )
             ],
+
             [
                 InlineKeyboardButton(
                     "⬅️ Назад",
                     callback_data=f"users:{page}"
                 )
             ]
+
         ]
 
         await query.edit_message_text(
