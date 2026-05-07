@@ -77,8 +77,8 @@ async def adminm(update, context):
 
 def admin_menu_keyboard():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("👥 Users", callback_data="users:0")],
-        [InlineKeyboardButton("📊 Stats", callback_data="stats")]
+        [InlineKeyboardButton("📊 Статистика", callback_data="stats")],
+        [InlineKeyboardButton("👤 Пользователи", callback_data="users:0")]
     ])
 
 async def admin_callback(update, context):
