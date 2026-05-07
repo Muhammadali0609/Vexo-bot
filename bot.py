@@ -67,27 +67,37 @@ async def handle_message(update, context):
         process_video(update, context, text, user_id, platform)
     )
     
-async def process_video(update, context, text, user_id, platform):
-    async with semaphore:
-        msg = await update.message.reply_text("⏳")
-        try:
-            file_path = await download_manager(text, platform)
-            if not file_path:
-                await msg.edit_text("⚠️ Видео сейчас недоступно, попробуйте позже")
-                return
+async def process_video(update, context, url, user_id, platform):
+    msg = await update.message.reply_text("⏳")
+    try:
+        # 🧠 1. CACHE CHECK (Telegram file_id)
+        file_id = get_cached_video(url)
 
-            with open(file_path, "rb") as video:
-                await update.message.reply_video(video=video)
-            safe_remove(file_path)
-
+        if file_id:
+            await update.message.reply_video(video=file_id)
             await msg.delete()
-            os.remove(file_path)
-            add_event(user_id, text, platform, "success")
+            return
 
-        except Exception as e:
-            print("DOWNLOAD ERROR:", repr(e))
-            await msg.edit_text("❌ Ошибка загрузки")
-            add_event(user_id, text, platform, "error")
+        # 🚀 2. DOWNLOAD
+        file_path = await download_manager(url, platform)
+
+        if not file_path:
+            await msg.edit_text("⚠️ Video not available")
+            return
+
+        # 📤 3. SEND TO TELEGRAM
+        with open(file_path, "rb") as video:
+            sent_msg = await update.message.reply_video(video=video)
+
+        # 💾 4. SAVE file_id
+        file_id = sent_msg.video.file_id
+        save_cached_video(url, file_id, platform)
+
+        await msg.delete()
+
+    except Exception as e:
+        print("PROCESS ERROR:", e)
+        await msg.edit_text("❌ Error while processing video")
             
 # 🔥 регистрируем handler
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
