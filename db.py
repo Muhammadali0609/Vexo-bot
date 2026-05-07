@@ -100,3 +100,41 @@ def get_error_count():
         WHERE status = 'error'
     """)
     return cursor.fetchone()[0]
+    
+def get_user(user_id):
+    cursor.execute("""
+    SELECT user_id, username, first_name
+    FROM users
+    WHERE user_id = %s
+    """, (user_id,))
+
+    return cursor.fetchone()
+    
+def get_user_total_events(user_id):
+    cursor.execute("""
+    SELECT COUNT(*)
+    FROM events
+    WHERE user_id = %s
+    """, (user_id,))
+
+    return cursor.fetchone()[0]
+
+def get_user_success_events(user_id):
+    cursor.execute("""
+    SELECT COUNT(*)
+    FROM events
+    WHERE user_id = %s
+    AND status = 'success'
+    """, (user_id,))
+
+    return cursor.fetchone()[0]
+
+def get_user_error_events(user_id):
+    cursor.execute("""
+    SELECT COUNT(*)
+    FROM events
+    WHERE user_id = %s
+    AND status = 'error'
+    """, (user_id,))
+
+    return cursor.fetchone()[0]
