@@ -57,11 +57,9 @@ async def try_yt_dlp_alt(url: str):
 # 🧠 MAIN ENGINE (FALLBACK CHAIN)
 # =========================
 async def download_manager(url: str):
-    cached = get_cached_video(url)
-    if cached:
-        return cached  # это file_id
-
     file_path = await try_yt_dlp(url)
+    if not file_path:
+        file_path = await try_yt_dlp_alt(url)
     return file_path
 
 # =========================
