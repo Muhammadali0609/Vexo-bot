@@ -19,7 +19,7 @@ def build_users_page(page: int):
     for i, user in enumerate(users, start=1 + offset):
         user_id, username, first_name = user
 
-        name = username if username else (first_name or "NoName")
+        name = first_name if first_name else (username or "NoName")
 
         text += f"{i}. {name} | {user_id}\n"
 
