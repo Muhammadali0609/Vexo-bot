@@ -41,7 +41,7 @@ def build_users_page(page: int):
     keyboard.append(nav)
 
     keyboard.append([
-        InlineKeyboardButton("⬅️ Back", callback_data="back")
+        InlineKeyboardButton("⬅️ Назад", callback_data="back")
     ])
 
     return text, InlineKeyboardMarkup(keyboard)
