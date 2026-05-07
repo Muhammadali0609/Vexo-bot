@@ -116,6 +116,32 @@ async def admin_callback(update, context):
             reply_markup=markup,
             parse_mode="HTML"
         )
+    elif query.data.startswith("user:"):
+        _, selected_user_id, page = query.data.split(":")
+
+        text = (
+            f"👤 User Card\n\n"
+            f"🆔 {selected_user_id}"
+        )
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "🚫 Бан",
+                    callback_data=f"ban:{selected_user_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "⬅️ Назад",
+                    callback_data=f"users:{page}"
+                )
+            ]
+        ]
+
+        await query.edit_message_text(
+            text,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
     elif query.data == "back":
         await query.edit_message_text(
             "🔐 Admin Panel",
