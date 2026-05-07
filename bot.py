@@ -19,17 +19,17 @@ app = ApplicationBuilder().token(TOKEN).build()
 
 # 🔥 обработка сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-
-    if not text:
+    text = update.message.text or ""
+    # 1. игнорируем команды (ВАЖНО)
+    if text.startswith("/"):
         return
-
-    if not any(x in text for x in ["tiktok.com", "instagram.com", "youtube.com", "youtu.be"]):
+    # 2. список поддерживаемых платформ
+    platforms = ("tiktok.com", "instagram.com", "youtube.com", "youtu.be")
+    # 3. проверяем есть ли ссылка
+    if not any(domain in text for domain in platforms):
         return
-
+    # 4. запускаем загрузку
     asyncio.create_task(process_video(update, context, text))
-
-
 # 🔥 скачивание
 async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, url: str):
     async with semaphore:
