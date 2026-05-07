@@ -50,7 +50,7 @@ async def handle_message(update, context):
 
     asyncio.create_task(process_video(update, context, text, user_id, platform))
     
-async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE, url: str):
+async def process_video(update, context, text, user_id, platform):
     async with semaphore:
         msg = await update.message.reply_text("⏳")
 
