@@ -37,8 +37,11 @@ async def admin_callback(update, context):
 
     if query.data == "stats":
         text = (
-            "📊 Статистика\n\n"
-            f"👥 Пользователей: {get_users_count()}"
+            "📊 Statistics\n\n"
+            f"📥 Total requests: {get_total_events()}\n"
+            f"📅 Today: {get_today_events()}\n"
+            f"✅ Success: {get_success_count()}\n"
+            f"❌ Errors: {get_error_count()}"
         )
         keyboard = [
             [InlineKeyboardButton("⬅️ Назад", callback_data="back")]
