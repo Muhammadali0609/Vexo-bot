@@ -25,7 +25,7 @@ cursor.execute("""
 CREATE TABLE IF NOT EXISTS video_cache (
     id SERIAL PRIMARY KEY,
     url TEXT UNIQUE,
-    telegram_file_id TEXT,
+    file_id TEXT,
     platform TEXT,
     created_at TIMESTAMP DEFAULT NOW()
 )
