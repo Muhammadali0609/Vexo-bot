@@ -71,6 +71,11 @@ def download_youtube(url):
         **COMMON_OPTS,
         "format": "best",
         "cookiefile": os.path.join(BASE_DIR, "cookies.txt"),
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"]
+            }
+        },
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
