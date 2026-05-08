@@ -27,8 +27,9 @@ async def try_yt_dlp(url: str):
 
     def run():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        return None  # мы НЕ знаем точный файл
+            info = ydl.extract_info(url, download=True)
+            file_path = ydl.prepare_filename(info)
+        return file_path
 
     await asyncio.to_thread(run)
 
@@ -67,8 +68,9 @@ async def try_yt_dlp_alt(url: str):
 
     def run():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        return file_name
+            info = ydl.extract_info(url, download=True)
+            file_path = ydl.prepare_filename(info)
+        return file_path
 
     return await asyncio.to_thread(run)
 
@@ -117,34 +119,30 @@ async def download_audio(url: str):
 # =========================
 async def download_manager(url: str):
     try:
-        # 🥇 original quality
         file_path = await try_yt_dlp(url)
+
         if file_path and os.path.exists(file_path):
             size_mb = get_file_size_mb(file_path)
+
             print(f"FILE SIZE: {size_mb:.2f}MB")
-            # 💥 если слишком большой
-            if size_mb > 100:
-                print("TOO BIG → DOWNLOADING 720P")
+
+            if size_mb > 50:
+                print("TOO BIG → SWITCH 720P")
                 safe_remove(file_path)
-                if low_file and os.path.exists(low_file):
-                    return low_file
-                return None
+                return await try_low_quality(url)
+
             return file_path
-            
+
     except Exception as e:
         print("PRIMARY FAIL:", e)
 
-    # 🥈 fallback
     try:
-        file_path = await try_yt_dlp_alt(url)
-        if file_path and os.path.exists(file_path):
-            return file_path
+        return await try_yt_dlp_alt(url)
 
     except Exception as e:
         print("ALT FAIL:", e)
 
     return None
-
 # =========================
 # 🧹 CLEANUP HELPER (optional later use)
 # =========================
