@@ -118,30 +118,42 @@ async def download_audio(url: str):
 # 🧠 MAIN ENGINE (FALLBACK CHAIN)
 # =========================
 async def download_manager(url: str):
+    last_error = None
+
+    for attempt in range(3):
+        try:
+            print(f"TRY {attempt + 1}/3")
+            file_path = await try_yt_dlp(url)
+            if file_path and os.path.exists(file_path):
+                size_mb = get_file_size_mb(file_path)
+                print(f"FILE SIZE: {size_mb:.2f}MB")
+
+                # 💥 если слишком большой → сразу 720p fallback
+                if size_mb > 50:
+                    print("TOO BIG → SWITCH 720P")
+                    safe_remove(file_path)
+                    low_file = await try_low_quality(url)
+                    return low_file if low_file and os.path.exists(low_file) else None
+
+                return file_path
+
+        except Exception as e:
+            print(f"PRIMARY FAIL attempt {attempt + 1}:", e)
+            last_error = e
+
+        # ⏳ retry delay (важная часть)
+        await asyncio.sleep(1.5)
+
+    # 🥈 fallback engine после 3 неудач
     try:
-        file_path = await try_yt_dlp(url)
-
-        if file_path and os.path.exists(file_path):
-            size_mb = get_file_size_mb(file_path)
-
-            print(f"FILE SIZE: {size_mb:.2f}MB")
-
-            if size_mb > 50:
-                print("TOO BIG → SWITCH 720P")
-                safe_remove(file_path)
-                return await try_low_quality(url)
-
-            return file_path
-
-    except Exception as e:
-        print("PRIMARY FAIL:", e)
-
-    try:
+        print("TRY ALT ENGINE")
         return await try_yt_dlp_alt(url)
 
     except Exception as e:
         print("ALT FAIL:", e)
+        last_error = e
 
+    print("ALL FAILED:", last_error)
     return None
 # =========================
 # 🧹 CLEANUP HELPER (optional later use)
