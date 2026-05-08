@@ -71,7 +71,7 @@ async def adminm(update, context):
     user_id = update.effective_user.id
 
     if not is_admin(user_id):
-        await update.message.reply_text("⛔ Access denied")
+        await update.message.reply_text("⛔ Admin emassiz")
         return
 
     keyboard = [
@@ -97,16 +97,16 @@ async def admin_callback(update, context):
     user_id = query.from_user.id
 
     if not is_admin(user_id):
-        await query.edit_message_text("⛔ No access")
+        await query.edit_message_text("⛔ Admin emassiz")
         return
 
     if query.data == "stats":
         text = (
-            "📊 Statistics\n\n"
-            f"📥 Total requests: {get_total_events()}\n"
-            f"📅 Today: {get_today_events()}\n"
-            f"✅ Success: {get_success_count()}\n"
-            f"❌ Errors: {get_error_count()}"
+            "📊 Статистика\n\n"
+            f"📥 Общие запросы: {get_total_events()}\n"
+            f"📅 Запросы на сегодня: {get_today_events()}\n"
+            f"✅ Успехи: {get_success_count()}\n"
+            f"❌ Ошибки: {get_error_count()}"
         )
         keyboard = [
             [InlineKeyboardButton("⬅️ Назад", callback_data="back")]
@@ -135,9 +135,9 @@ async def admin_callback(update, context):
         text = (
             f"👤 {name}\n\n"
             f"🆔 {selected_user_id}\n\n"
-            f"📥 Requests: {total}\n"
-            f"✅ Success: {success}\n"
-            f"❌ Errors: {errors}"
+            f"📥 Запросы: {total}\n"
+            f"✅ Успехи: {success}\n"
+            f"❌ Ошибки: {errors}"
         )
 
         keyboard = [
