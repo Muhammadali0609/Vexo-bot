@@ -9,6 +9,21 @@ conn.autocommit = True
 
 cursor = conn.cursor()
 
+def reset_video_cache_table():
+    cursor.execute("DROP TABLE IF EXISTS video_cache")
+
+    cursor.execute("""
+    CREATE TABLE video_cache (
+        id SERIAL PRIMARY KEY,
+        url TEXT UNIQUE,
+        file_id TEXT,
+        audio_file_id TEXT,
+        platform TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    conn.commit()
 
 # таблица пользователей
 cursor.execute("""
@@ -20,8 +35,6 @@ CREATE TABLE IF NOT EXISTS users (
     last_seen TIMESTAMP
 )
 """)
-
-cursor.execute("DROP TABLE IF EXISTS video_cache")
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS video_cache (
