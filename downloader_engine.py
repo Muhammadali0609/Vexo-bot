@@ -7,24 +7,41 @@ from db import get_cached_video, save_cached_video
 # =========================
 # 🔥 PRIMARY YT-DLP
 # =========================
+def progress_hook(d):
+    if d['status'] == 'finished':
+        print("DONE:", d['filename'])
+
 async def try_yt_dlp(url: str):
-    file_name = f"downloads/{uuid.uuid4()}.mp4"
+    file_name = f"downloads/{uuid.uuid4()}.%(ext)s"
 
     os.makedirs("downloads", exist_ok=True)
 
     ydl_opts = {
         "outtmpl": "downloads/%(id)s.%(ext)s",
-        "format": "mp4/best",
+        "format": "best",
         "quiet": True,
         "noplaylist": True,
+        "progress_hooks": [progress_hook]
     }
 
     def run():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-        return file_name
+        return None  # мы НЕ знаем точный файл
 
-    return await asyncio.to_thread(run)
+    await asyncio.to_thread(run)
+
+    # 🔥 найти реальный файл
+    files = os.listdir("downloads")
+    if not files:
+        return None
+
+    latest = max(
+        [os.path.join("downloads", f) for f in files],
+        key=os.path.getctime
+    )
+
+    return latest
 
 
 # =========================
@@ -43,6 +60,7 @@ async def try_yt_dlp_alt(url: str):
         "noplaylist": True,
         "retries": 3,
         "fragment_retries": 3,
+        "progress_hooks": [progress_hook]
     }
 
     def run():
