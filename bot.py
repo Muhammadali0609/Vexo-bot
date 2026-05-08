@@ -146,6 +146,12 @@ async def process_video(update, context, url, user_id, platform):
         await msg.edit_text(
             "❌ Error while processing video"
         )
+
+    finally:
+        try:
+            await msg.delete()
+        except Exception as e:
+            print("DELETE ERROR:", e)
             
 # 🔥 регистрируем handler
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
