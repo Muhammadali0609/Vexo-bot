@@ -57,10 +57,21 @@ async def try_yt_dlp_alt(url: str):
 # 🧠 MAIN ENGINE (FALLBACK CHAIN)
 # =========================
 async def download_manager(url: str):
-    file_path = await try_yt_dlp(url)
-    if not file_path:
+    try:
+        file_path = await try_yt_dlp(url)
+        if file_path and os.path.exists(file_path):
+            return file_path
+    except Exception as e:
+        print("PRIMARY FAIL:", e)
+
+    try:
         file_path = await try_yt_dlp_alt(url)
-    return file_path
+        if file_path and os.path.exists(file_path):
+            return file_path
+    except Exception as e:
+        print("ALT FAIL:", e)
+
+    return None
 
 # =========================
 # 🧹 CLEANUP HELPER (optional later use)
