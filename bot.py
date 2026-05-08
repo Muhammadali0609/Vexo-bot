@@ -68,9 +68,16 @@ async def process_video(update, context, url, user_id, platform):
     msg = await update.message.reply_text("⏳")
     try:
         # 🧠 1. CACHE CHECK
-        file_id = get_cached_video(url)
-        if file_id:
-            await update.message.reply_video(video=file_id)
+        cached = get_cached_video(url)
+        if cached:
+            video_file_id, audio_file_id = cached
+            await update.message.reply_video(
+                video=video_file_id
+            )
+            if audio_file_id:
+                await update.message.reply_audio(
+                    audio=audio_file_id
+                )
             await msg.delete()
             return
         # 🚀 2. DOWNLOAD
@@ -86,16 +93,16 @@ async def process_video(update, context, url, user_id, platform):
 
         # 💾 4. SAVE file_id
         file_id = sent_msg.video.file_id
-        save_cached_video(url, file_id, platform)
+        save_cached_video(url, file_id, audio_file_id, platform)
         
         # 🎵 DOWNLOAD AUDIO
         audio_path = await download_audio(url)
 
         if audio_path and os.path.exists(audio_path):
-
-            await update.message.reply_audio(
+            sent_audio = await update.message.reply_audio(
                 audio=audio_path
             )
+            audio_file_id = sent_audio.audio.file_id
 
             safe_remove(audio_path)
 
