@@ -73,14 +73,13 @@ async def try_yt_dlp_alt(url: str):
     return await asyncio.to_thread(run)
 
 async def try_low_quality(url: str):
-    file_name = f"downloads/{uuid.uuid4()}_low.mp4"
+    file_name = f"downloads/{uuid.uuid4()}.mp4"
 
     os.makedirs("downloads", exist_ok=True)
 
     ydl_opts = {
-        "outtmpl": file_name,
-        "format": "bestvideo[height<=720]+bestaudio/best[height<=720]",
-        "merge_output_format": "mp4",
+        "outtmpl": "downloads/%(id)s.%(ext)s",
+        "format": "best[height<=720]",
         "quiet": True,
         "noplaylist": True,
     }
@@ -107,8 +106,9 @@ async def download_manager(url: str):
             if size_mb > 100:
                 print("TOO BIG → DOWNLOADING 720P")
                 safe_remove(file_path)
-                low_file = await try_low_quality(url)
-                return low_file
+                if low_file and os.path.exists(low_file):
+                    return low_file
+                return None
             return file_path
             
     except Exception as e:
