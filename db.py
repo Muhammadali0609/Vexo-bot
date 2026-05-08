@@ -4,7 +4,7 @@ from datetime import datetime
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-conn = psycopg2.connect(DATABASE_URL)
+conn = psycopg2.connect(DATABASE_URL, sslmode="require")
 conn.autocommit = True
 
 cursor = conn.cursor()
