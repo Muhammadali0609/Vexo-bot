@@ -92,7 +92,10 @@ async def process_video(update, context, url, user_id, platform):
         file_path = await download_manager(url)
 
         if not file_path:
-            await msg.edit_text("⚠️ Видео недоступно, попробуйте снова")
+            try:
+                await msg.edit_text("⚠️ Видео недоступно, попробуйте снова")
+            except:
+                await update.message.reply_text("⚠️ Видео недоступно, попробуйте снова")
             return
 
         # 📤 3. SEND VIDEO
