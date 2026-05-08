@@ -74,7 +74,13 @@ def add_event(user_id, url, platform, status="pending"):
     cursor.execute("""
         INSERT INTO events (user_id, url, platform, status)
         VALUES (%s, %s, %s, %s)
+        RETURNING id
     """, (user_id, url, platform, status))
+
+    event_id = cursor.fetchone()[0]
+    conn.commit()
+
+    return event_id
 
 
 def update_event_status(event_id, status):
