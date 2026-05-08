@@ -92,6 +92,26 @@ async def try_low_quality(url: str):
 
     return await asyncio.to_thread(run)
 
+async def download_audio(url: str):
+    file_name = f"downloads/{uuid.uuid4()}.mp3"
+
+    os.makedirs("downloads", exist_ok=True)
+
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "outtmpl": file_name,
+        "quiet": True,
+        "noplaylist": True,
+    }
+
+    def run():
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        return file_name
+
+    return await asyncio.to_thread(run)
+
 # =========================
 # 🧠 MAIN ENGINE (FALLBACK CHAIN)
 # =========================
