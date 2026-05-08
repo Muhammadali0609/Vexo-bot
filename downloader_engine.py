@@ -76,14 +76,26 @@ async def try_yt_dlp_alt(url: str):
 
 async def try_low_quality(url: str):
     file_name = f"downloads/{uuid.uuid4()}.mp4"
-
     os.makedirs("downloads", exist_ok=True)
 
     ydl_opts = {
-        "outtmpl": "downloads/%(id)s.%(ext)s",
-        "format": "best[height<=720]",
-        "quiet": True,
+        "outtmpl": file_name,
+
+        # 💥 SAFE LOW QUALITY STRATEGY
+        # берём максимум 480p, если нет — что есть
+        "format": "best[height<=480]/worst[ext=mp4]/best",
+
+        # 💥 важно для стабильности TikTok/Instagram
+        "merge_output_format": "mp4",
         "noplaylist": True,
+        "quiet": True,
+
+        # 💥 меньше нагрузка = быстрее и стабильнее
+        "concurrent_fragment_downloads": 1,
+
+        # 💥 защита от зависаний
+        "retries": 3,
+        "fragment_retries": 3,
     }
 
     def run():
@@ -92,8 +104,12 @@ async def try_low_quality(url: str):
 
         return file_name
 
-    return await asyncio.to_thread(run)
-
+    try:
+        return await asyncio.to_thread(run)
+    except Exception as e:
+        print("LOW QUALITY FAIL:", e)
+        return None
+        
 async def download_audio(url: str):
     file_name = f"downloads/{uuid.uuid4()}.mp3"
 
