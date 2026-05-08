@@ -3,7 +3,7 @@ import asyncio
 
 from telegram import Update
 from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
-from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video
+from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video, reset_video_cache_table
 from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
 from downloader_engine import download_manager, safe_remove, download_audio
@@ -128,6 +128,7 @@ async def post_init(app):
     print("🚀 webhook set")
 
 def main():
+    reset_video_cache_table()
     port = int(os.environ.get("PORT", 10000))
     app.post_init = post_init
     app.run_webhook(
