@@ -21,13 +21,16 @@ CREATE TABLE IF NOT EXISTS users (
 )
 """)
 
+cursor.execute("DROP TABLE IF EXISTS video_cache")
+
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS video_cache (
     id SERIAL PRIMARY KEY,
     url TEXT UNIQUE,
     file_id TEXT,
+    audio_file_id TEXT,
     platform TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
 """)
 
@@ -149,21 +152,25 @@ def get_user_error_events(user_id):
 
     return cursor.fetchone()[0]
     
-def get_cached_video(url: str):
+def get_cached_video(url):
     cursor.execute("""
-        SELECT file_id FROM video_cache
+        SELECT file_id, audio_file_id
+        FROM video_cache
         WHERE url = %s
     """, (url,))
 
-    row = cursor.fetchone()
-    return row[0] if row else None
+    return cursor.fetchone()
 
 
-def save_cached_video(url: str, file_id: str, platform: str):
+def save_cached_video(url, file_id, audio_file_id, platform):
     cursor.execute("""
-        INSERT INTO video_cache (url, file_id, platform)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (url) DO NOTHING
-    """, (url, file_id, platform))
+        INSERT INTO video_cache
+        (url, file_id, audio_file_id, platform)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (url)
+        DO UPDATE SET
+            file_id = EXCLUDED.file_id,
+            audio_file_id = EXCLUDED.audio_file_id
+    """, (url, file_id, audio_file_id, platform))
 
     conn.commit()
