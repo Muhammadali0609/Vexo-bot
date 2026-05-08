@@ -72,6 +72,26 @@ async def try_yt_dlp_alt(url: str):
 
     return await asyncio.to_thread(run)
 
+async def try_low_quality(url: str):
+    file_name = f"downloads/{uuid.uuid4()}_low.mp4"
+
+    os.makedirs("downloads", exist_ok=True)
+
+    ydl_opts = {
+        "outtmpl": file_name,
+        "format": "bestvideo[height<=720]+bestaudio/best[height<=720]",
+        "merge_output_format": "mp4",
+        "quiet": True,
+        "noplaylist": True,
+    }
+
+    def run():
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        return file_name
+
+    return await asyncio.to_thread(run)
 
 # =========================
 # 🧠 MAIN ENGINE (FALLBACK CHAIN)
@@ -102,3 +122,7 @@ def safe_remove(file_path: str):
             os.remove(file_path)
     except Exception as e:
         print("CLEANUP ERROR:", e)
+        
+def get_file_size_mb(file_path):
+    size = os.path.getsize(file_path)
+    return size / (1024 * 1024)
