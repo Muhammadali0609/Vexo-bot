@@ -6,7 +6,7 @@ from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,Callb
 from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video
 from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
-#from downloader_engine import download_manager, safe_remove
+from downloader_engine import download_manager, safe_remove
 
 # 🔥 лимит параллельных загрузок
 semaphore = asyncio.Semaphore(2)
@@ -77,7 +77,7 @@ async def process_video(update, context, url, user_id, platform):
             await msg.delete()
             return
         # 🚀 2. DOWNLOAD (only first time)
-        #file_path = await download_manager(url)
+        file_path = await download_manager(url)
         if not file_path:
             await msg.edit_text("⚠️ Video not available")
             return
