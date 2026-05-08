@@ -66,7 +66,7 @@ async def handle_message(update, context):
     
 async def process_video(update, context, url, user_id, platform, event_id):
     msg = await update.message.reply_text("⏳")
-    caption = "✅ @Vexoapp_bot"
+    caption = "✅ @Vexoapp_bot orqali yuklandi"
 
     try:
         # 🧠 1. CACHE CHECK
