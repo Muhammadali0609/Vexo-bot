@@ -66,6 +66,7 @@ async def handle_message(update, context):
     
 async def process_video(update, context, url, user_id, platform):
     msg = await update.message.reply_text("⏳")
+    caption = "✅ @Vexoapp_bot"
 
     try:
         # 🧠 1. CACHE CHECK
@@ -75,7 +76,8 @@ async def process_video(update, context, url, user_id, platform):
             video_file_id, audio_file_id = cached
 
             await update.message.reply_video(
-                video=video_file_id
+                video=video_file_id,
+                caption=caption
             )
 
             if audio_file_id:
@@ -95,7 +97,8 @@ async def process_video(update, context, url, user_id, platform):
 
         # 📤 3. SEND VIDEO
         sent_msg = await update.message.reply_video(
-            video=file_path
+            video=file_path,
+            caption=caption
         )
 
         video_file_id = sent_msg.video.file_id
