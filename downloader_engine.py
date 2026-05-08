@@ -19,9 +19,10 @@ async def try_yt_dlp(url: str):
     ydl_opts = {
         "outtmpl": "downloads/%(id)s.%(ext)s",
         "format": "best",
+        "concurrent_fragment_downloads": 1,
         "quiet": True,
         "noplaylist": True,
-        "progress_hooks": [progress_hook]
+        "progress_hooks": [progress_hook],
     }
 
     def run():
@@ -56,6 +57,7 @@ async def try_yt_dlp_alt(url: str):
         "outtmpl": "downloads/%(id)s.%(ext)s",
         "format": "bestvideo+bestaudio/best",
         "merge_output_format": "mp4",
+        "concurrent_fragment_downloads": 1,
         "quiet": True,
         "noplaylist": True,
         "retries": 3,
