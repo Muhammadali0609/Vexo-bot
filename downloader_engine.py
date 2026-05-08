@@ -13,7 +13,7 @@ async def try_yt_dlp(url: str):
     os.makedirs("downloads", exist_ok=True)
 
     ydl_opts = {
-        "outtmpl": file_name,
+        "outtmpl": "downloads/%(id)s.%(ext)s",
         "format": "mp4/best",
         "quiet": True,
         "noplaylist": True,
@@ -36,7 +36,7 @@ async def try_yt_dlp_alt(url: str):
     os.makedirs("downloads", exist_ok=True)
 
     ydl_opts = {
-        "outtmpl": file_name,
+        "outtmpl": "downloads/%(id)s.%(ext)s",
         "format": "bestvideo+bestaudio/best",
         "merge_output_format": "mp4",
         "quiet": True,
