@@ -6,7 +6,7 @@ from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,Callb
 from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video
 from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
-from downloader_engine import download_manager, safe_remove
+from downloader_engine import download_manager, safe_remove, download_audio
 
 # 🔥 лимит параллельных загрузок
 semaphore = asyncio.Semaphore(2)
@@ -87,6 +87,17 @@ async def process_video(update, context, url, user_id, platform):
         # 💾 4. SAVE file_id
         file_id = sent_msg.video.file_id
         save_cached_video(url, file_id, platform)
+        
+        # 🎵 DOWNLOAD AUDIO
+        audio_path = await download_audio(url)
+
+        if audio_path and os.path.exists(audio_path):
+
+            await update.message.reply_audio(
+                audio=audio_path
+            )
+
+            safe_remove(audio_path)
 
         # 🧹 5. DELETE LOCAL FILE
         safe_remove(file_path)
