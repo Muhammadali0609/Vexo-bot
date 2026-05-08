@@ -77,7 +77,7 @@ async def process_video(update, context, url, user_id, platform):
             await msg.delete()
             return
         # 🚀 2. DOWNLOAD (only first time)
-        file_path = await download_manager(url, platform)
+        file_path = await download_manager(url)
         if not file_path:
             await msg.edit_text("⚠️ Video not available")
             return
