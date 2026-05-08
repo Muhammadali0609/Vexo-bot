@@ -62,9 +62,7 @@ async def handle_message(update, context):
     # 📊 2. лог события
     add_event(user_id, text, platform, "pending")
     # 🚀 3. запускаем обработку
-    asyncio.create_task(
-        process_video(update, context, text, user_id, platform)
-    )
+    await process_video(update, context, text, user_id, platform)
     
 async def process_video(update, context, url, user_id, platform):
     msg = await update.message.reply_text("⏳")
