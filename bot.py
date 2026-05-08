@@ -66,54 +66,74 @@ async def handle_message(update, context):
     
 async def process_video(update, context, url, user_id, platform):
     msg = await update.message.reply_text("⏳")
+
     try:
         # 🧠 1. CACHE CHECK
         cached = get_cached_video(url)
+
         if cached:
             video_file_id, audio_file_id = cached
+
             await update.message.reply_video(
                 video=video_file_id
             )
+
             if audio_file_id:
                 await update.message.reply_audio(
                     audio=audio_file_id
                 )
+
             await msg.delete()
             return
-        # 🚀 2. DOWNLOAD
+
+        # 🚀 2. DOWNLOAD VIDEO
         file_path = await download_manager(url)
+
         if not file_path:
             await msg.edit_text("⚠️ Video not available")
             return
 
-        # 📤 3. SEND TO TELEGRAM
+        # 📤 3. SEND VIDEO
         sent_msg = await update.message.reply_video(
             video=file_path
         )
 
-        # 💾 4. SAVE file_id
-        file_id = sent_msg.video.file_id
-        save_cached_video(url, file_id, audio_file_id, platform)
-        
-        # 🎵 DOWNLOAD AUDIO
+        video_file_id = sent_msg.video.file_id
+
+        # 🎵 4. DOWNLOAD AUDIO
+        audio_file_id = None
+
         audio_path = await download_audio(url)
 
         if audio_path and os.path.exists(audio_path):
+
             sent_audio = await update.message.reply_audio(
                 audio=audio_path
             )
+
             audio_file_id = sent_audio.audio.file_id
 
             safe_remove(audio_path)
 
-        # 🧹 5. DELETE LOCAL FILE
+        # 💾 5. SAVE CACHE
+        save_cached_video(
+            url,
+            video_file_id,
+            audio_file_id,
+            platform
+        )
+
+        # 🧹 6. DELETE VIDEO FILE
         safe_remove(file_path)
 
         await msg.delete()
 
     except Exception as e:
         print("PROCESS ERROR:", e)
-        await msg.edit_text("❌ Error while processing video")
+
+        await msg.edit_text(
+            "❌ Error while processing video"
+        )
             
 # 🔥 регистрируем handler
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
