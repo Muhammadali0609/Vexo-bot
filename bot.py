@@ -60,11 +60,11 @@ async def handle_message(update, context):
     user_id = update.effective_user.id
     platform = detect_platform(text)
     # 📊 2. лог события
-    add_event(user_id, text, platform, "pending")
+    event_id = add_event(user_id, text, platform, "pending")
     # 🚀 3. запускаем обработку
-    await process_video(update, context, text, user_id, platform)
+    await process_video(update, context, text, user_id, platform, event_id)
     
-async def process_video(update, context, url, user_id, platform):
+async def process_video(update, context, url, user_id, platform, event_id):
     msg = await update.message.reply_text("⏳")
     caption = "✅ @Vexoapp_bot"
 
@@ -132,22 +132,14 @@ async def process_video(update, context, url, user_id, platform):
         # 🧹 6. DELETE VIDEO FILE
         safe_remove(file_path)
         
-        update_event_status(
-            user_id,
-            url,
-            "success"
-        )
+        update_event_status(event_id, "success")
         
         await msg.delete()
 
     except Exception as e:
         print("PROCESS ERROR:", e)
 
-        update_event_status(
-            user_id,
-            url,
-            "error"
-        )
+        update_event_status(event_id, "error")
         
         try:
             await msg.edit_text("⚠️ Видео недоступно, попробуйте снова")
