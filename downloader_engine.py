@@ -109,7 +109,26 @@ async def try_low_quality(url: str):
     except Exception as e:
         print("LOW QUALITY FAIL:", e)
         return None
-        
+
+async def try_yt_dlp_with_format(url: str, fmt: str):
+    file_name = f"downloads/{uuid.uuid4()}.mp4"
+    os.makedirs("downloads", exist_ok=True)
+
+    ydl_opts = {
+        "outtmpl": file_name,
+        "format": fmt,
+        "merge_output_format": "mp4",
+        "quiet": True,
+        "noplaylist": True,
+    }
+
+    def run():
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+        return file_name
+
+    return await asyncio.to_thread(run)
+
 async def download_audio(url: str):
     file_name = f"downloads/{uuid.uuid4()}.mp3"
 
@@ -135,32 +154,56 @@ async def download_audio(url: str):
 # =========================
 async def download_manager(url: str):
     last_error = None
-
     for attempt in range(3):
         try:
             print(f"TRY {attempt + 1}/3")
-            file_path = await try_yt_dlp(url)
+            # 💥 STEP 1: получаем инфо БЕЗ скачивания
+            def get_info():
+                import yt_dlp
+                with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+                    return ydl.extract_info(url, download=False)
+
+            info = await asyncio.to_thread(get_info)
+            formats = info.get("formats", [])
+            # 🎯 STEP 2: ищем лучший формат ≤720p
+            selected_format = None
+            selected_size = None
+
+            for f in formats:
+                if f.get("height") and f["height"] <= 720:
+                    # размер (если есть)
+                    size = f.get("filesize") or f.get("filesize_approx")
+                    # выбираем первый подходящий
+                    if selected_format is None:
+                        selected_format = f["format_id"]
+                        selected_size = size
+
+            # fallback если ничего нет
+            if not selected_format:
+                selected_format = "best"
+                selected_size = None
+
+            # 💥 STEP 3: если уже видно что файл большой → сразу low mode
+            if selected_size and selected_size > 50 * 1024 * 1024:
+                print("TOO BIG (pre-check) → LOW QUALITY MODE")
+
+                file_path = await try_yt_dlp_with_format(
+                    url,
+                    "best[height<=480]/worst/best"
+                )
+            else:
+                file_path = await try_yt_dlp_with_format(url, selected_format)
+
             if file_path and os.path.exists(file_path):
-                size_mb = get_file_size_mb(file_path)
-                print(f"FILE SIZE: {size_mb:.2f}MB")
-
-                # 💥 если слишком большой → сразу 720p fallback
-                if size_mb > 50:
-                    print("TOO BIG → SWITCH 720P")
-                    safe_remove(file_path)
-                    low_file = await try_low_quality(url)
-                    return low_file if low_file and os.path.exists(low_file) else None
-
                 return file_path
 
         except Exception as e:
             print(f"PRIMARY FAIL attempt {attempt + 1}:", e)
             last_error = e
 
-        # ⏳ retry delay (важная часть)
         await asyncio.sleep(1.5)
 
-    # 🥈 fallback engine после 3 неудач
+    # 🥈 fallback engine
     try:
         print("TRY ALT ENGINE")
         return await try_yt_dlp_alt(url)
