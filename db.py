@@ -10,38 +10,43 @@ def get_conn():
     return conn
 
 
-# таблица пользователей
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    user_id BIGINT PRIMARY KEY,
-    username TEXT,
-    first_name TEXT,
-    first_seen TIMESTAMP,
-    last_seen TIMESTAMP
-)
-""")
+def init_db():
+    conn = get_conn()
+    cursor = conn.cursor()
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS video_cache (
-    id SERIAL PRIMARY KEY,
-    url TEXT UNIQUE,
-    file_id TEXT,
-    audio_file_id TEXT,
-    platform TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
-""")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        user_id BIGINT PRIMARY KEY,
+        username TEXT,
+        first_name TEXT,
+        first_seen TIMESTAMP,
+        last_seen TIMESTAMP
+    )
+    """)
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS events (
-    id SERIAL PRIMARY KEY,
-    user_id BIGINT,
-    url TEXT,
-    platform TEXT,
-    status TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
-)
-""")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS video_cache (
+        id SERIAL PRIMARY KEY,
+        url TEXT UNIQUE,
+        file_id TEXT,
+        audio_file_id TEXT,
+        platform TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS events (
+        id SERIAL PRIMARY KEY,
+        user_id BIGINT,
+        url TEXT,
+        platform TEXT,
+        status TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+    )
+    """)
+
+    conn.commit()
 
 def add_user(user_id, username=None, first_name=None):
     conn = get_conn()
