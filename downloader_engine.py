@@ -23,8 +23,8 @@ async def try_yt_dlp(url: str):
         "outtmpl": file_name,
 
         # 🔥 СТАБИЛЬНЫЙ ФОРМАТ (ВАЖНО)
-        "format": "bv*[ext=mp4][vcodec^=avc1]+ba[ext=m4a]/b[ext=mp4]",
-
+        "format": "best[ext=mp4]/best",
+        "postprocessor_args": ["-vsync", "cfr"],
         "merge_output_format": "mp4",
 
         "noplaylist": True,
@@ -59,6 +59,7 @@ async def try_yt_dlp_alt(url: str):
         "outtmpl": file_name,
 
         "format": "bestvideo+bestaudio/best",
+        "postprocessor_args": ["-vsync", "cfr"],
         "merge_output_format": "mp4",
 
         "noplaylist": True,
