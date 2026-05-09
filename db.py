@@ -5,10 +5,9 @@ from datetime import datetime
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_conn():
-    return psycopg2.connect(DATABASE_URL, sslmode="require")
-conn.autocommit = True
-
-cursor = conn.cursor()
+    conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+    conn.autocommit = True
+    return conn
 
 
 # таблица пользователей
@@ -45,6 +44,8 @@ CREATE TABLE IF NOT EXISTS events (
 """)
 
 def add_user(user_id, username=None, first_name=None):
+    conn = get_conn()
+    cursor = conn.cursor()
     now = datetime.utcnow()
 
     cursor.execute("""
@@ -58,6 +59,8 @@ def add_user(user_id, username=None, first_name=None):
     """, (user_id, username, first_name, now, now))
 
 def get_users(offset=0, limit=10):
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
         SELECT user_id, username, first_name
         FROM users
@@ -68,10 +71,14 @@ def get_users(offset=0, limit=10):
     return cursor.fetchall()
 
 def get_users_count():
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM users")
     return cursor.fetchone()[0]
     
 def add_event(user_id, url, platform, status="pending"):
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO events (user_id, url, platform, status)
         VALUES (%s, %s, %s, %s)
@@ -85,6 +92,8 @@ def add_event(user_id, url, platform, status="pending"):
 
 
 def update_event_status(event_id, status):
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
         UPDATE events
         SET status = %s
@@ -92,11 +101,15 @@ def update_event_status(event_id, status):
     """, (status, event_id))
     
 def get_total_events():
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM events")
     return cursor.fetchone()[0]
 
 
 def get_today_events():
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
         SELECT COUNT(*) FROM events
         WHERE created_at >= NOW() - INTERVAL '1 day'
@@ -105,6 +118,8 @@ def get_today_events():
 
 
 def get_success_count():
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
         SELECT COUNT(*) FROM events
         WHERE status = 'success'
@@ -113,6 +128,8 @@ def get_success_count():
 
 
 def get_error_count():
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
         SELECT COUNT(*) FROM events
         WHERE status = 'error'
@@ -120,6 +137,8 @@ def get_error_count():
     return cursor.fetchone()[0]
     
 def get_user(user_id):
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
     SELECT user_id, username, first_name
     FROM users
@@ -129,6 +148,8 @@ def get_user(user_id):
     return cursor.fetchone()
     
 def get_user_total_events(user_id):
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
     SELECT COUNT(*)
     FROM events
@@ -138,6 +159,8 @@ def get_user_total_events(user_id):
     return cursor.fetchone()[0]
 
 def get_user_success_events(user_id):
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
     SELECT COUNT(*)
     FROM events
@@ -148,6 +171,8 @@ def get_user_success_events(user_id):
     return cursor.fetchone()[0]
 
 def get_user_error_events(user_id):
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
     SELECT COUNT(*)
     FROM events
@@ -158,6 +183,8 @@ def get_user_error_events(user_id):
     return cursor.fetchone()[0]
     
 def get_cached_video(url):
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
         SELECT file_id, audio_file_id
         FROM video_cache
@@ -168,6 +195,8 @@ def get_cached_video(url):
 
 
 def save_cached_video(url, file_id, audio_file_id, platform):
+    conn = get_conn()
+    cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO video_cache
         (url, file_id, audio_file_id, platform)
