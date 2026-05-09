@@ -47,8 +47,8 @@ def detect_platform(text: str):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     register_user(update)
     await update.message.reply_text(
-        "👋 Welcome\n\n"
-        "📥 Send TikTok / YouTube / Instagram link"
+        "👋 Vexo ga hush kelibsiz\n\n"
+        "📥 TikTok / YouTube / Instagram havola yuboring"
     )
 # 🔥 обработка сообщений
 async def handle_message(update, context):
