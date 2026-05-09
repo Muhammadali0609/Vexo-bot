@@ -115,6 +115,27 @@ async def download_manager(url: str):
     print("ALL FAILED:", last_error)
     return None
 
+async def download_audio(url: str):
+    os.makedirs("downloads", exist_ok=True)
+
+    file_name = f"downloads/{uuid.uuid4()}.mp3"
+
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "outtmpl": file_name,
+
+        "quiet": True,
+        "noplaylist": True,
+
+        "cookiefile": "cookies.txt",
+    }
+
+    def run():
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+        return file_name
+
+    return await asyncio.to_thread(run)
 
 # =========================
 # 🧹 CLEANUP
