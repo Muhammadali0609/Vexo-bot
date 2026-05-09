@@ -1,4 +1,7 @@
+app = "vexo-bot"
+
 [build]
+builder = "paketobuildpacks/builder:base"
 
 [env]
 PORT = "8080"
@@ -14,5 +17,3 @@ handlers = ["http"]
 [[services.ports]]
 port = 443
 handlers = ["tls", "http"]
-[processes]
-app = "python bot.py"
