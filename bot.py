@@ -1,5 +1,6 @@
 import os
 import asyncio
+import re
 
 from telegram import Update
 from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
@@ -14,6 +15,12 @@ semaphore = asyncio.Semaphore(2)
 
 # 🔥 создаём Telegram приложение
 app = ApplicationBuilder().token(TOKEN).build()
+
+def extract_url(text: str):
+    urls = re.findall(r'https?://\S+', text)
+    if urls:
+        return urls[0]
+    return None
 
 def register_user(update):
     user = update.effective_user
@@ -54,16 +61,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update, context):
     register_user(update)
     text = update.message.text or ""
-    # 🚫 1. проверка ссылки
-    if not is_valid_link(text):
+    url = extract_url(text)
+    if not url:
+        return
+    
+    if not is_valid_link(url):
         return
 
     user_id = update.effective_user.id
-    platform = detect_platform(text)
+    platform = detect_platform(url)
     # 📊 2. лог события
-    event_id = add_event(user_id, text, platform, "pending")
+    event_id = add_event(user_id, url, platform, "pending")
     # 🚀 3. запускаем обработку
-    await process_video(update, context, text, user_id, platform, event_id)
+    await process_video(update, context, url, user_id, platform, event_id)
     
 async def process_video(update, context, url, user_id, platform, event_id):
     msg = await update.message.reply_text("⏳")
