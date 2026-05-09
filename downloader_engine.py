@@ -23,6 +23,8 @@ async def try_yt_dlp(url: str):
         "quiet": True,
         "noplaylist": True,
         "progress_hooks": [progress_hook],
+        "cookiefile": "cookies.txt",
+        "no_warnings": True
     }
 
     def run():
@@ -63,7 +65,9 @@ async def try_yt_dlp_alt(url: str):
         "noplaylist": True,
         "retries": 3,
         "fragment_retries": 3,
-        "progress_hooks": [progress_hook]
+        "progress_hooks": [progress_hook],
+        "cookiefile": "cookies.txt",
+        "no_warnings": True
     }
 
     def run():
