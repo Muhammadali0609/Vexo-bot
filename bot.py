@@ -85,7 +85,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
                 await update.message.reply_audio(
                     audio=audio_file_id
                 )
-
+            update_event_status(event_id, "success")
             return
 
         # 🚀 2. DOWNLOAD VIDEO
