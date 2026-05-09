@@ -18,7 +18,8 @@ async def try_yt_dlp(url: str):
 
     ydl_opts = {
         "outtmpl": "downloads/%(id)s.%(ext)s",
-        "format": "best",
+        "format": "bv*[ext=mp4][vcodec^=avc1]+ba[ext=m4a]/b[ext=mp4]",
+        "merge_output_format": "mp4",
         "concurrent_fragment_downloads": 1,
         "quiet": True,
         "noplaylist": True,
@@ -58,7 +59,7 @@ async def try_yt_dlp_alt(url: str):
 
     ydl_opts = {
         "outtmpl": "downloads/%(id)s.%(ext)s",
-        "format": "bestvideo+bestaudio/best",
+        "format": "bv*[ext=mp4][vcodec^=avc1]+ba[ext=m4a]/b[ext=mp4]",
         "merge_output_format": "mp4",
         "concurrent_fragment_downloads": 1,
         "quiet": True,
