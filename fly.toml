@@ -1,10 +1,10 @@
 [build]
 
 [env]
-PORT = "10000"
+PORT = "8080"
 
 [[services]]
-internal_port = 10000
+internal_port = 8080
 protocol = "tcp"
 
 [[services.ports]]
