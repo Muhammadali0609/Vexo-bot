@@ -67,6 +67,7 @@ def add_user(user_id, username=None, first_name=None):
             first_name = EXCLUDED.first_name,
             last_seen = EXCLUDED.last_seen
         """, (user_id, username, first_name, now, now))
+        conn.commit()
     finally:
         conn.close()
 
