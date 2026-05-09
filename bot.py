@@ -7,6 +7,7 @@ from db import add_user, get_users_count, add_event, get_cached_video, save_cach
 from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
 from downloader_engine import download_manager, safe_remove, download_audio
+print("🔥 BOT STARTED")
 
 # 🔥 лимит параллельных загрузок
 semaphore = asyncio.Semaphore(2)
@@ -85,11 +86,11 @@ async def process_video(update, context, url, user_id, platform, event_id):
                     audio=audio_file_id
                 )
 
-            await msg.delete()
             return
 
         # 🚀 2. DOWNLOAD VIDEO
-        file_path = await download_manager(url)
+        async with semaphore:
+            file_path = await download_manager(url)
 
         if not file_path:
             try:
@@ -133,8 +134,6 @@ async def process_video(update, context, url, user_id, platform, event_id):
         safe_remove(file_path)
         
         update_event_status(event_id, "success")
-        
-        await msg.delete()
 
     except Exception as e:
         print("PROCESS ERROR:", e)
