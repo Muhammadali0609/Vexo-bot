@@ -164,7 +164,7 @@ async def post_init(app):
 
 def main():
     init_db()
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 8080))
     app.post_init = post_init
     app.run_webhook(
         listen="0.0.0.0",
