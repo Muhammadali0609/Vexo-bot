@@ -121,6 +121,7 @@ def update_event_status(event_id, status):
             SET status = %s
             WHERE id = %s
         """, (status, event_id))
+        conn.commit()
     finally:
         conn.close()
     
