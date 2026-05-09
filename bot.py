@@ -11,7 +11,7 @@ from downloader_engine import download_manager, safe_remove, download_audio
 print("🔥 BOT STARTED")
 
 # 🔥 лимит параллельных загрузок
-semaphore = asyncio.Semaphore(2)
+semaphore = asyncio.Semaphore(1)
 
 # 🔥 создаём Telegram приложение
 app = ApplicationBuilder().token(TOKEN).build()
