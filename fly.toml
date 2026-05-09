@@ -1,7 +1,4 @@
-app = "vexo-bot"
-
-[build]
-builder = "paketobuildpacks/builder:base"
+app = "desktop-marbled-snowfall-7860"
 
 [env]
 PORT = "8080"
