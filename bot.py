@@ -167,7 +167,7 @@ def main():
     port = int(os.environ.get("PORT", 8080))
     app.post_init = post_init
     app.run_webhook(
-        listen="0.0.0.0",
+        listen="0.0.0.0:8080",
         port=port,
         url_path="webhook",
         webhook_url=WEBHOOK_URL,
