@@ -23,26 +23,14 @@ async def try_yt_dlp(url: str):
         "outtmpl": file_name,
 
         # 🔥 СТАБИЛЬНЫЙ ФОРМАТ (ВАЖНО)
-        "format": "best[ext=mp4]",
-        "postprocessors": [{
-            "key": "FFmpegVideoRemuxer",
-            "preferedformat": "mp4",
-        }],
-    
-        "postprocessor_args": [
-            "-c:v", "libx264",
-            "-c:a", "aac",
-            "-movflags", "+faststart"
-        ],
+        "format": "best[ext=mp4]/best",
         "merge_output_format": "mp4",
 
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
 
-        "concurrent_fragment_downloads": 1,
         "retries": 3,
-        "fragment_retries": 3,
 
         "cookiefile": "cookies.txt",
         "progress_hooks": [progress_hook],
@@ -68,7 +56,6 @@ async def try_yt_dlp_alt(url: str):
         "outtmpl": file_name,
 
         "format": "bestvideo+bestaudio/best",
-        "postprocessor_args": ["-vsync", "cfr"],
         "merge_output_format": "mp4",
 
         "noplaylist": True,
@@ -76,7 +63,6 @@ async def try_yt_dlp_alt(url: str):
         "no_warnings": True,
 
         "retries": 3,
-        "fragment_retries": 3,
 
         "cookiefile": "cookies.txt",
         "progress_hooks": [progress_hook],
