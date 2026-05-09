@@ -3,3 +3,4 @@ python-telegram-bot[webhooks]
 yt-dlp
 ffmpeg-python
 psycopg2-binary
+aiohttp
