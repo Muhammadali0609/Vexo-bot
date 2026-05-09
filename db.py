@@ -5,6 +5,8 @@ from datetime import datetime
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_conn():
+    if not DATABASE_URL:
+        raise Exception("DATABASE_URL is missing")
     conn = psycopg2.connect(DATABASE_URL, sslmode="require")
     conn.autocommit = True
     return conn
