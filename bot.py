@@ -47,7 +47,7 @@ def detect_platform(text: str):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     register_user(update)
     await update.message.reply_text(
-        "👋 Welcome to Vexo\n\n"
+        "👋 Welcome\n\n"
         "📥 Send TikTok / YouTube / Instagram link"
     )
 # 🔥 обработка сообщений
