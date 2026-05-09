@@ -24,7 +24,14 @@ async def try_yt_dlp(url: str):
 
         # 🔥 СТАБИЛЬНЫЙ ФОРМАТ (ВАЖНО)
         "format": "best[ext=mp4]/best",
-        "postprocessor_args": ["-vsync", "cfr"],
+        "postprocessors": [{
+            "key": "FFmpegVideoConvertor",
+            "preferedformat": "mp4"
+        }],
+        "postprocessor_args": [
+            "-vf", "fps=30",
+            "-vsync", "cfr"
+        ],
         "merge_output_format": "mp4",
 
         "noplaylist": True,
