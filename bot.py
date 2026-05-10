@@ -2,6 +2,8 @@ import os
 import asyncio
 import re
 
+from dotenv import load_dotenv
+load_dotenv()
 from telegram import Update
 from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
 from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video, update_event_status, init_db
