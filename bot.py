@@ -100,48 +100,38 @@ async def process_video(update, context, url, user_id, platform, event_id):
 
         # 🚀 2. DOWNLOAD VIDEO
         async with semaphore:
-            result = await download_manager(url)
+            file_path = await download_manager(url)
 
-        if not result:
+        if not file_path:
             await msg.edit_text("⚠️ Kichik xatolik, yana urinib koring")
             return
 
-        file_path = result["file"]
-        media_type = result.get("type", "video")
-
         # 📤 3. SEND VIDEO
-        if media_type == "video":
-            sent_msg = await update.message.reply_video(
-                video=file_path,
-                caption=caption
-            )
-
-        # 📸 SEND PHOTO / SLIDESHOW
-        else:
-            if isinstance(file_path, list):
-                for img in file_path:
-                    await update.message.reply_photo(photo=img)
-            else:
-                await update.message.reply_photo(photo=file_path, caption=caption)
-
-        # 💾 CACHE (video only)
-        video_file_id = None
+        sent_msg = await update.message.reply_video(
+            video=file_path,
+            caption=caption
+        )
+        video_file_id = sent_msg.video.file_id
+        
         audio_file_id = None
 
-        if media_type == "video":
-            video_file_id = sent_msg.video.file_id
+        audio_path = await download_audio(url)
+        
+        if audio_path and os.path.exists(audio_path):
+            sent_audio = await update.message.reply_audio(
+                audio=audio_path
+            )
 
-            audio_path = await download_audio(url)
+            audio_file_id = sent_audio.audio.file_id
+            safe_remove(audio_path)
 
-            if audio_path and os.path.exists(audio_path):
-                sent_audio = await update.message.reply_audio(audio=audio_path)
-                audio_file_id = sent_audio.audio.file_id
-                safe_remove(audio_path)
-
-        save_cached_video(url, video_file_id, audio_file_id, platform)
-
-        safe_remove(file_path if isinstance(file_path, str) else "")
-
+        save_cached_video(
+            url,
+            video_file_id,
+            audio_file_id,
+            platform
+        )
+        safe_remove(file_path)
         update_event_status(event_id, "success")
 
     except Exception as e:
