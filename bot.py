@@ -13,7 +13,6 @@ from locales import t
 
 print("🔥 BOT STARTED")
 
-lang = get_user_lang(user_id)
 semaphore = asyncio.Semaphore(2)
 ACTIVE_TASKS = set()
 
@@ -98,6 +97,7 @@ async def handle_message(update, context):
         return
 
     user_id = update.effective_user.id
+    lang = get_user_lang(user_id)
     platform = detect_platform(url)
     # 📊 2. лог события
     event_id = add_event(user_id, url, platform, "pending")
@@ -107,6 +107,7 @@ async def handle_message(update, context):
     )
     
 async def process_video(update, context, url, user_id, platform, event_id):
+    lang = get_user_lang(user_id)
     task_id = id(update)
     ACTIVE_TASKS.add(task_id)
     msg = await update.message.reply_text(t(lang, "loading"))
