@@ -97,7 +97,7 @@ async def handle_message(update, context):
         return
 
     user_id = update.effective_user.id
-    lang = get_user_lang(user_id)
+    lang = get_user_lang(user_id) or "ru"
     platform = detect_platform(url)
     # 📊 2. лог события
     event_id = add_event(user_id, url, platform, "pending")
@@ -107,7 +107,7 @@ async def handle_message(update, context):
     )
     
 async def process_video(update, context, url, user_id, platform, event_id):
-    lang = get_user_lang(user_id)
+    lang = get_user_lang(user_id) or "ru"
     task_id = id(update)
     ACTIVE_TASKS.add(task_id)
     msg = await update.message.reply_text(t(lang, "loading"))
@@ -191,9 +191,9 @@ async def process_video(update, context, url, user_id, platform, event_id):
 # 🔥 регистрируем handler
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 app.add_handler(CommandHandler("adminm", adminm))
-app.add_handler(CallbackQueryHandler(admin_callback))
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CallbackQueryHandler(language_handler, pattern="lang_"))
+app.add_handler(CallbackQueryHandler(language_handler, pattern="^lang_"))
+app.add_handler(CallbackQueryHandler(admin_callback))
 
 async def post_init(app):
     await app.bot.delete_webhook(drop_pending_updates=True)
