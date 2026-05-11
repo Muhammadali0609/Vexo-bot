@@ -69,6 +69,7 @@ async def start(update, context):
 
 async def language_handler(update, context):
     query = update.callback_query
+    print("🔥 CALLBACK RECEIVED:", query.data)
     await query.answer()
 
     user_id = query.from_user.id
