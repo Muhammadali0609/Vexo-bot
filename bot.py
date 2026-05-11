@@ -83,6 +83,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
     ACTIVE_TASKS.add(task_id)
     msg = await update.message.reply_text("⏳")
     caption = "✅ @Vexoapp_bot orqali yuklandi"
+    success = False
 
     try:
         # 🧠 1. CACHE CHECK
@@ -101,6 +102,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
                     audio=audio_file_id
                 )
             update_event_status(event_id, "success")
+            success = True
             return
 
         # 🚀 2. DOWNLOAD VIDEO
@@ -138,6 +140,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
         )
         safe_remove(file_path)
         update_event_status(event_id, "success")
+        success = True
 
     except Exception as e:
         print("PROCESS ERROR:", e)
@@ -150,10 +153,11 @@ async def process_video(update, context, url, user_id, platform, event_id):
             await update.message.reply_text("⚠️ Видео недоступно, попробуйте снова")
     finally:
         ACTIVE_TASKS.discard(task_id)
-        try:
-            await msg.delete()
-        except Exception as e:
-            print("DELETE ERROR:", e)
+        if success:
+            try:
+                await msg.delete()
+            except Exception as e:
+                print("DELETE ERROR:", e)
             
 # 🔥 регистрируем handler
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
