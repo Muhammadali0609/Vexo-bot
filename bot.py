@@ -12,6 +12,7 @@ print("🔥 BOT STARTED")
 
 # 🔥 лимит параллельных загрузок
 semaphore = asyncio.Semaphore(2)
+ACTIVE_TASKS = set()
 
 # 🔥 создаём Telegram приложение
 app = ApplicationBuilder().token(TOKEN).build()
@@ -73,9 +74,13 @@ async def handle_message(update, context):
     # 📊 2. лог события
     event_id = add_event(user_id, url, platform, "pending")
     # 🚀 3. запускаем обработку
-    await process_video(update, context, url, user_id, platform, event_id)
+    asyncio.create_task(
+        process_video(update, context, url, user_id, platform, event_id)
+    )
     
 async def process_video(update, context, url, user_id, platform, event_id):
+    task_id = id(update)
+    ACTIVE_TASKS.add(task_id)
     msg = await update.message.reply_text("⏳")
     caption = "✅ @Vexoapp_bot orqali yuklandi"
 
@@ -144,6 +149,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
         except:
             await update.message.reply_text("⚠️ Видео недоступно, попробуйте снова")
     finally:
+        ACTIVE_TASKS.discard(task_id)
         try:
             await msg.delete()
         except Exception as e:
