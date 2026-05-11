@@ -84,6 +84,7 @@ async def language_handler(update, context):
     await query.edit_message_text(
         t(lang, "start")
     )
+    await query.edit_message_reply_markup(None)
 
 # 🔥 обработка сообщений
 async def handle_message(update, context):
