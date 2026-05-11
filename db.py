@@ -270,7 +270,7 @@ def set_user_lang(user_id, lang):
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "UPDATE users SET language=? WHERE user_id=?",
+            "UPDATE users SET language=%s WHERE user_id=%s",
             (lang, user_id)
         )
         conn.commit()
@@ -282,7 +282,7 @@ def get_user_lang(user_id):
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT language FROM users WHERE user_id=?",
+            "SELECT language FROM users WHERE user_id=%s",
             (user_id,)
         )
         row = cursor.fetchone()
