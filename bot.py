@@ -113,7 +113,6 @@ async def process_video(update, context, url, user_id, platform, event_id):
     task_id = id(update)
     ACTIVE_TASKS.add(task_id)
     msg = await update.message.reply_text(t(lang, "loading"))
-    caption = "✅ @Vexoapp_bot orqali yuklandi"
     success = False
 
     try:
@@ -125,7 +124,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
 
             await update.message.reply_video(
                 video=video_file_id,
-                caption=caption
+                caption=t(lang, "loading")
             )
 
             if audio_file_id:
@@ -147,7 +146,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
         # 📤 3. SEND VIDEO
         sent_msg = await update.message.reply_video(
             video=file_path,
-            caption=caption
+            caption=t(lang, "loading")
         )
         video_file_id = sent_msg.video.file_id
         
