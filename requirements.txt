@@ -4,3 +4,4 @@ yt-dlp
 ffmpeg-python
 psycopg2-binary
 aiohttp
+redis
