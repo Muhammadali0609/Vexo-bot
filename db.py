@@ -266,20 +266,30 @@ def save_cached_video(url, file_id, audio_file_id, platform):
         conn.close()
 
 def set_user_lang(user_id, lang):
-    cursor.execute(
-        "UPDATE users SET language=? WHERE user_id=?",
-        (lang, user_id)
-    )
-    conn.commit()
+    conn = get_conn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET language=? WHERE user_id=?",
+            (lang, user_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 def get_user_lang(user_id):
-    cursor.execute(
-        "SELECT language FROM users WHERE user_id=?",
-        (user_id,)
-    )
-    row = cursor.fetchone()
-
-    if row:
-        return row[0]
-
-    return "ru"
+    conn = get_conn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT language FROM users WHERE user_id=?",
+            (user_id,)
+        )
+        row = cursor.fetchone()
+    
+        if row:
+            return row[0]
+    
+        return "ru"
+    finally:
+        conn.close()
