@@ -124,7 +124,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
 
             await update.message.reply_video(
                 video=video_file_id,
-                caption=t(lang, "loading")
+                caption=t(lang, "caption")
             )
 
             if audio_file_id:
@@ -146,7 +146,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
         # 📤 3. SEND VIDEO
         sent_msg = await update.message.reply_video(
             video=file_path,
-            caption=t(lang, "loading")
+            caption=t(lang, "caption")
         )
         video_file_id = sent_msg.video.file_id
         
