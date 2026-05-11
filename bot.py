@@ -3,14 +3,17 @@ import asyncio
 import re
 
 from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
 from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video, update_event_status, init_db
 from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
 from downloader_engine import download_manager, safe_remove, download_audio
+from locales import t
+
 print("🔥 BOT STARTED")
 
-# 🔥 лимит параллельных загрузок
+lang = get_user_lang(user_id)
 semaphore = asyncio.Semaphore(2)
 ACTIVE_TASKS = set()
 
@@ -52,12 +55,37 @@ def detect_platform(text: str):
         return "instagram"
     return "unknown"
     
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    register_user(update)
+async def start(update, context):
+    keyboard = [
+        [
+            InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
+            InlineKeyboardButton("🇺🇿 O‘zbek", callback_data="lang_uz")
+        ]
+    ]
+
     await update.message.reply_text(
-        "👋 Vexo ga hush kelibsiz\n\n"
-        "📥 TikTok / YouTube / Instagram havola yuboring"
+        "🌍 Выберите язык / Tilni tanlang",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
+
+async def language_handler(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    user_id = query.from_user.id
+
+    lang = "ru"
+    if query.data == "lang_uz":
+        lang = "uz"
+
+    set_user_lang(user_id, lang)
+
+    from locales import t
+
+    await query.edit_message_text(
+        t(lang, "start")
+    )
+
 # 🔥 обработка сообщений
 async def handle_message(update, context):
     register_user(update)
@@ -81,7 +109,7 @@ async def handle_message(update, context):
 async def process_video(update, context, url, user_id, platform, event_id):
     task_id = id(update)
     ACTIVE_TASKS.add(task_id)
-    msg = await update.message.reply_text("⏳")
+    msg = await update.message.reply_text(t(lang, "loading"))
     caption = "✅ @Vexoapp_bot orqali yuklandi"
     success = False
 
@@ -110,7 +138,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
             file_path = await download_manager(url)
 
         if not file_path:
-            await msg.edit_text("⚠️ Kichik xatolik, yana urinib koring")
+            await msg.edit_text(t(lang, "error"))
             return
 
         # 📤 3. SEND VIDEO
@@ -148,9 +176,9 @@ async def process_video(update, context, url, user_id, platform, event_id):
         update_event_status(event_id, "error")
         
         try:
-            await msg.edit_text("⚠️ Видео недоступно, попробуйте снова")
+            await msg.edit_text(t(lang, "error"))
         except:
-            await update.message.reply_text("⚠️ Видео недоступно, попробуйте снова")
+            await update.message.reply_text(t(lang, "error"))
     finally:
         ACTIVE_TASKS.discard(task_id)
         if success:
@@ -164,6 +192,7 @@ app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 app.add_handler(CommandHandler("adminm", adminm))
 app.add_handler(CallbackQueryHandler(admin_callback))
 app.add_handler(CommandHandler("start", start))
+app.add_handler(CallbackQueryHandler(language_handler, pattern="lang_"))
 
 async def post_init(app):
     await app.bot.delete_webhook(drop_pending_updates=True)
