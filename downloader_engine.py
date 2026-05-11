@@ -23,7 +23,7 @@ async def try_yt_dlp(url: str):
         "outtmpl": file_name,
 
         # 🔥 СТАБИЛЬНЫЙ ФОРМАТ (ВАЖНО)
-        "format": "bv*[height<=720]+ba/b[height<=720]",
+        "format": "bestvideo+bestaudio/best",
         "merge_output_format": "mp4",
 
         "noplaylist": True,
