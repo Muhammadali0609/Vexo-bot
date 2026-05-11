@@ -74,20 +74,16 @@ async def language_handler(update, context):
 
     user_id = query.from_user.id
 
-    current_lang = get_user_lang(user_id)
+    lang = "ru"
+    if query.data == "lang_uz":
+        lang = "uz"
 
-    new_lang = "uz" if query.data == "lang_uz" else "ru"
-    
-    if current_lang == new_lang:
-        return  # ничего не делаем
-    
-    set_user_lang(user_id, new_lang)
+    set_user_lang(user_id, lang)
 
     from locales import t
-    
+
     await query.edit_message_text(
-        t(new_lang, "start")
-    )
+        t(lang, "start")
     await query.edit_message_reply_markup(None)
 
 # 🔥 обработка сообщений
