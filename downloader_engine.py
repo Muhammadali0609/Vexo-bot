@@ -40,8 +40,10 @@ def get_ydl_opts(platform, file_name):
     # =========================
     elif platform == "tiktok":
         base.update({
-            "format": "best",
-            
+            "format": "best[height<=720]",
+            "postprocessor_args": [
+                "-r", "30"
+            ],
             "recodevideo": "mp4",
         })
 
@@ -50,7 +52,7 @@ def get_ydl_opts(platform, file_name):
     # =========================
     elif platform == "instagram":
         base.update({
-            "format": "bestvideo*+bestaudio/best",
+            "format": "best[height<=720]",
             "recodevideo": "mp4",
         })
 
