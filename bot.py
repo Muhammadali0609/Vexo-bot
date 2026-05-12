@@ -146,12 +146,9 @@ async def process_video(update, context, url, user_id, platform, event_id):
         # 📤 3. SEND VIDEO
         width, height = get_video_metadata(file_path)
 
-        sent_msg = await update.message.reply_video(
-            video=file_path,
-            caption=t(lang, "caption"),
-            width=width,
-            height=height,
-            supports_streaming=True
+        sent_msg = await update.message.reply_document(
+            document=file_path,
+            caption=caption
         )
         video_file_id = sent_msg.video.file_id
         
