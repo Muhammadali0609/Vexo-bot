@@ -74,17 +74,35 @@ def get_ydl_opts(platform, file_name):
 async def try_yt_dlp(url: str, platform: str):
     os.makedirs("downloads", exist_ok=True)
 
-    file_name = f"downloads/{uuid.uuid4()}.mp4"
+    file_name = f"downloads/{uuid.uuid4()}.%(ext)s"
 
     ydl_opts = get_ydl_opts(platform, file_name)
 
     def run():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        return file_name
+            info = ydl.extract_info(url, download=True)
+            final_path = ydl.prepare_filename(info)
+
+            if final_path.endswith(".webm"):
+                final_path = final_path.replace(".webm", ".mp4")
+
+            elif final_path.endswith(".mkv"):
+                final_path = final_path.replace(".mkv", ".mp4")
+
+            ext = os.path.splitext(final_path)[1].lower()
+
+            if ext in [".jpg", ".jpeg", ".png", ".webp"]:
+                media_type = "photo"
+
+            else:
+                media_type = "video"
+
+            return {
+                "path": final_path,
+                "type": media_type
+            }
 
     return await asyncio.to_thread(run)
-
 
 # =========================
 # 🔁 ALT DOWNLOAD (backup)
@@ -92,14 +110,33 @@ async def try_yt_dlp(url: str, platform: str):
 async def try_yt_dlp_alt(url: str, platform: str):
     os.makedirs("downloads", exist_ok=True)
 
-    file_name = f"downloads/{uuid.uuid4()}_alt.mp4"
+    file_name = f"downloads/{uuid.uuid4()}_alt.%(ext)s"
 
     ydl_opts = get_ydl_opts(platform, file_name)
 
     def run():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        return file_name
+            info = ydl.extract_info(url, download=True)
+            final_path = ydl.prepare_filename(info)
+
+            if final_path.endswith(".webm"):
+                final_path = final_path.replace(".webm", ".mp4")
+
+            elif final_path.endswith(".mkv"):
+                final_path = final_path.replace(".mkv", ".mp4")
+
+            ext = os.path.splitext(final_path)[1].lower()
+
+            if ext in [".jpg", ".jpeg", ".png", ".webp"]:
+                media_type = "photo"
+
+            else:
+                media_type = "video"
+
+            return {
+                "path": final_path,
+                "type": media_type
+            }
 
     return await asyncio.to_thread(run)
 
@@ -137,10 +174,10 @@ async def download_manager(url: str, platform: str):
     for attempt in range(3):
         try:
             print(f"TRY PRIMARY {attempt + 1}/3")
-            file_path = await try_yt_dlp(url, platform)
-
-            if file_path and os.path.exists(file_path):
-                return file_path
+            result = await try_yt_dlp(url, platform)
+            
+            if result and os.path.exists(result["path"]):
+                return result
 
         except Exception as e:
             print("PRIMARY FAIL:", e)
@@ -151,10 +188,10 @@ async def download_manager(url: str, platform: str):
     # 🔁 fallback
     try:
         print("TRY ALT ENGINE")
-        file_path = await try_yt_dlp_alt(url, platform)
-
-        if file_path and os.path.exists(file_path):
-            return file_path
+        result = await try_yt_dlp(url, platform)
+            
+        if result and os.path.exists(result["path"]):
+            return result
 
     except Exception as e:
         print("ALT FAIL:", e)
