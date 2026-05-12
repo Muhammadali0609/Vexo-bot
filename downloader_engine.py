@@ -44,7 +44,9 @@ def get_ydl_opts(platform, file_name):
         base.update({
             "format": "best",
             "postprocessor_args": [
-                "-r", "30"
+                "-fflags", "+genpts",
+                "-avoid_negative_ts", "make_zero",
+                "-movflags", "+faststart"
             ],
             "recodevideo": "mp4",
         })
