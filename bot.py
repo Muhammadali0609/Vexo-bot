@@ -8,7 +8,7 @@ from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,Callb
 from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video, update_event_status, init_db, set_user_lang, get_user_lang
 from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
-from downloader_engine import download_manager, safe_remove, download_audio
+from downloader_engine import download_manager, safe_remove, download_audio, get_video_metadata
 from locales import t
 
 print("🔥 BOT STARTED")
@@ -121,7 +121,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
 
         if cached:
             video_file_id, audio_file_id = cached
-
+            
             await update.message.reply_video(
                 video=video_file_id,
                 caption=t(lang, "caption")
@@ -144,9 +144,14 @@ async def process_video(update, context, url, user_id, platform, event_id):
             return
 
         # 📤 3. SEND VIDEO
+        width, height = get_video_metadata(file_path)
+
         sent_msg = await update.message.reply_video(
             video=file_path,
-            caption=t(lang, "caption")
+            caption=t(lang, "caption"),
+            width=width,
+            height=height,
+            supports_streaming=True
         )
         video_file_id = sent_msg.video.file_id
         
