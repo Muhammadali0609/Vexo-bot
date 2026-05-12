@@ -10,20 +10,11 @@ def progress_hook(d):
     if d['status'] == 'finished':
         print("DONE:", d['filename'])
 
-
-# =========================
-# 🧠 PRIMARY DOWNLOAD
-# =========================
-async def try_yt_dlp(url: str):
-    os.makedirs("downloads", exist_ok=True)
-
-    file_name = f"downloads/{uuid.uuid4()}.mp4"
-
-    ydl_opts = {
+def get_ydl_opts(platform, file_name):
+    
+    base = {
         "outtmpl": file_name,
 
-        # 🔥 СТАБИЛЬНЫЙ ФОРМАТ (ВАЖНО)
-        "format": "bestvideo+bestaudio/best",
         "merge_output_format": "mp4",
 
         "noplaylist": True,
@@ -35,6 +26,70 @@ async def try_yt_dlp(url: str):
         "cookiefile": "cookies.txt",
         "progress_hooks": [progress_hook],
     }
+
+    # =========================
+    # 🎵 YOUTUBE
+    # =========================
+    if platform == "youtube":
+        base.update({
+            "format": "bv*[height<=720]+ba/b",
+        })
+
+    # =========================
+    # 🎵 TIKTOK
+    # =========================
+    elif platform == "tiktok":
+        base.update({
+            "format": "best",
+
+            "recodevideo": "mp4",
+
+            "postprocessor_args": [
+                "-c:v", "libx264",
+                "-preset", "fast",
+                "-crf", "23",
+
+                "-c:a", "aac",
+
+                "-movflags", "+faststart"
+            ]
+        })
+
+    # =========================
+    # 🎵 INSTAGRAM
+    # =========================
+    elif platform == "instagram":
+        base.update({
+            "format": "bestvideo*+bestaudio/best",
+
+            "recodevideo": "mp4",
+
+            "postprocessor_args": [
+                "-c:v", "libx264",
+                "-c:a", "aac",
+                "-movflags", "+faststart"
+            ]
+        })
+
+    # =========================
+    # 🔥 DEFAULT
+    # =========================
+    else:
+        base.update({
+            "format": "best"
+        })
+
+    return base
+
+# =========================
+# 🧠 PRIMARY DOWNLOAD
+# =========================
+async def try_yt_dlp(url: str, platform: str):
+    os.makedirs("downloads", exist_ok=True)
+
+    file_name = f"downloads/{uuid.uuid4()}.mp4"
+
+    ydl_opts = get_ydl_opts(platform, file_name)
 
     def run():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -47,26 +102,12 @@ async def try_yt_dlp(url: str):
 # =========================
 # 🔁 ALT DOWNLOAD (backup)
 # =========================
-async def try_yt_dlp_alt(url: str):
+async def try_yt_dlp_alt(url: str, platform: str):
     os.makedirs("downloads", exist_ok=True)
 
     file_name = f"downloads/{uuid.uuid4()}_alt.mp4"
 
-    ydl_opts = {
-        "outtmpl": file_name,
-
-        "format": "bestvideo+bestaudio/best",
-        "merge_output_format": "mp4",
-
-        "noplaylist": True,
-        "quiet": True,
-        "no_warnings": True,
-
-        "retries": 3,
-
-        "cookiefile": "cookies.txt",
-        "progress_hooks": [progress_hook],
-    }
+    ydl_opts = get_ydl_opts(platform, file_name)
 
     def run():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -79,13 +120,13 @@ async def try_yt_dlp_alt(url: str):
 # =========================
 # 🚀 MAIN ENGINE (SIMPLE + CLEAN)
 # =========================
-async def download_manager(url: str):
+async def download_manager(url: str, platform: str):
     last_error = None
 
     for attempt in range(3):
         try:
             print(f"TRY PRIMARY {attempt + 1}/3")
-            file_path = await try_yt_dlp(url)
+            file_path = await try_yt_dlp(url, platform)
 
             if file_path and os.path.exists(file_path):
                 return file_path
@@ -99,7 +140,7 @@ async def download_manager(url: str):
     # 🔁 fallback
     try:
         print("TRY ALT ENGINE")
-        file_path = await try_yt_dlp_alt(url)
+        file_path = await try_yt_dlp_alt(url, platform)
 
         if file_path and os.path.exists(file_path):
             return file_path
