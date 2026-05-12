@@ -43,11 +43,6 @@ def get_ydl_opts(platform, file_name):
             "format": "best",
             
             "recodevideo": "mp4",
-
-            "postprocessor_args": [
-                "-c", "copy",
-                "-movflags", "+faststart"
-            ]
         })
 
     # =========================
@@ -58,11 +53,6 @@ def get_ydl_opts(platform, file_name):
             "format": "bestvideo*+bestaudio/best",
 
             "recodevideo": "mp4",
-
-            "postprocessor_args": [
-                "-c", "copy",
-                "-movflags", "+faststart"
-            ]
         })
 
     # =========================
