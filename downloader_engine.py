@@ -51,6 +51,7 @@ def get_ydl_opts(platform, file_name):
     elif platform == "instagram":
         base.update({
             "format": "bestvideo*+bestaudio/best",
+            "recodevideo": "mp4",
         })
 
     # =========================
