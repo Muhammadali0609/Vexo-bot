@@ -42,15 +42,8 @@ def get_ydl_opts(platform, file_name):
         base.update({
             "format": "best",
 
-            "recodevideo": "mp4",
-
             "postprocessor_args": [
-                "-c:v", "libx264",
-                "-preset", "fast",
-                "-crf", "23",
-
-                "-c:a", "aac",
-
+                "-c", "copy",
                 "-movflags", "+faststart"
             ]
         })
@@ -62,11 +55,8 @@ def get_ydl_opts(platform, file_name):
         base.update({
             "format": "bestvideo*+bestaudio/best",
 
-            "recodevideo": "mp4",
-
             "postprocessor_args": [
-                "-c:v", "libx264",
-                "-c:a", "aac",
+                "-c", "copy",
                 "-movflags", "+faststart"
             ]
         })
