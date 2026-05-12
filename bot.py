@@ -148,7 +148,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
 
         sent_msg = await update.message.reply_document(
             document=file_path,
-            caption=caption
+            caption=t(lang, "error")
         )
         video_file_id = sent_msg.video.file_id
         
