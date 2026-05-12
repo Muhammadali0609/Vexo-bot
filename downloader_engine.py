@@ -41,6 +41,8 @@ def get_ydl_opts(platform, file_name):
     elif platform == "tiktok":
         base.update({
             "format": "best",
+            
+            "recodevideo": "mp4",
 
             "postprocessor_args": [
                 "-c", "copy",
@@ -54,6 +56,8 @@ def get_ydl_opts(platform, file_name):
     elif platform == "instagram":
         base.update({
             "format": "bestvideo*+bestaudio/best",
+
+            "recodevideo": "mp4",
 
             "postprocessor_args": [
                 "-c", "copy",
