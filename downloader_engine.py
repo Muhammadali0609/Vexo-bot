@@ -2,6 +2,8 @@ import asyncio
 import os
 import uuid
 import yt_dlp
+import subprocess
+import json
 
 # =========================
 # 🔥 HOOK (лог скачивания)
@@ -101,6 +103,30 @@ async def try_yt_dlp_alt(url: str, platform: str):
 
     return await asyncio.to_thread(run)
 
+def get_video_metadata(file_path):
+    try:
+        result = subprocess.check_output([
+            "ffprobe",
+            "-v", "quiet",
+            "-print_format", "json",
+            "-show_streams",
+            file_path
+        ])
+
+        data = json.loads(result)
+
+        video_stream = next(
+            s for s in data["streams"]
+            if s["codec_type"] == "video"
+        )
+        width = video_stream.get("width")
+        height = video_stream.get("height")
+
+        return width, height
+
+    except Exception as e:
+        print("FFPROBE ERROR:", e)
+        return None, None
 
 # =========================
 # 🚀 MAIN ENGINE (SIMPLE + CLEAN)
