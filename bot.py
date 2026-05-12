@@ -137,7 +137,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
 
         # 🚀 2. DOWNLOAD VIDEO
         async with semaphore:
-            file_path = await download_manager(url)
+            file_path = await download_manager(url, platform)
 
         if not file_path:
             await msg.edit_text(t(lang, "error"))
