@@ -137,32 +137,22 @@ async def process_video(update, context, url, user_id, platform, event_id):
 
         # 🚀 2. DOWNLOAD VIDEO
         async with semaphore:
-            result = await download_manager(url, platform)
+            file_path = await download_manager(url, platform)
 
-        if not result:
-            file_path = result["path"]
-            media_type = result["type"]
+        if not file_path:
             await msg.edit_text(t(lang, "error"))
             return
 
         # 📤 3. SEND VIDEO
-        if media_type == "photo":
+        width, height = get_video_metadata(file_path)
 
-            sent_msg = await update.message.reply_photo(
-                photo=file_path,
-                caption=t(lang, "caption")
-            )
-
-        else:
-            width, height = get_video_metadata(file_path)
-
-            sent_msg = await update.message.reply_video(
-                video=file_path,
-                caption=t(lang, "caption"),
-                width=width,
-                height=height,
-                supports_streaming=True
-            )
+        sent_msg = await update.message.reply_video(
+            video=file_path,
+            caption=t(lang, "caption"),
+            width=width,
+            height=height,
+            supports_streaming=True
+        )
         video_file_id = sent_msg.video.file_id
         
         audio_file_id = None
