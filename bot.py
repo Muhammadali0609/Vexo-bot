@@ -164,31 +164,19 @@ async def process_video(update, context, url, user_id, platform, event_id):
 
         # 📸 PHOTO POSTS
         photo_result = None
-        
-        if "/photo/" in url:
-            if platform == "instagram":
-                photo_result = await download_instagram_photo(url)
-        
-            elif platform == "tiktok":
-                photo_result = await download_tiktok_photo(url)
-                print("PHOTO RESULT:", photo_result)
-        
-            # ❌ если фото не скачалось
-            if not photo_result:
-                await msg.edit_text(t(lang, "error"))
-                return
-        
-            # ✅ single image
-            if isinstance(photo_result, str):
-                await update.message.reply_photo(photo=photo_result)
-        
-            # ✅ carousel
-            else:
+
+        if platform == "instagram":
+            photo_result = await download_instagram_photo(url)
+        elif platform == "tiktok":
+            photo_result = await download_tiktok_photo(url)
+        if photo_result:
+            if isinstance(photo_result, list):
                 for img in photo_result:
                     await update.message.reply_photo(photo=img)
-        
+            else:
+                await update.message.reply_photo(photo=photo_result)
+
             update_event_status(event_id, "success")
-            success = True
             return
         
         # 🚀 2. DOWNLOAD VIDEO
