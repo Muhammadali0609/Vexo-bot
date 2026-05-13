@@ -55,54 +55,81 @@ async def download_instagram_photo(url: str):
 async def download_tiktok_photo(url: str):
     print("TIKTOK PHOTO URL:", url)
     try:
-        print("TIKTOK PHOTO URL:", url)
+
         headers = {
+
             "User-Agent": (
-                "Mozilla/5.0"
+
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+
+                "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+
+                "Version/17.0 Mobile/15E148 Safari/604.1"
+
             )
+
         }
+
         response = requests.get(
+
             url,
+
             headers=headers,
+
+            allow_redirects=True,
+
             timeout=15
+
         )
+
         html = response.text
-        
-        # 🔥 ищем JSON с SIGI_STATE
-        start = html.find(
-            '<script id="SIGI_STATE" type="application/json">'
+
+        print("FINAL URL:", response.url)
+
+        # 🔥 Новый TikTok JSON
+
+        match = re.search(
+
+            r'__UNIVERSAL_DATA_FOR_REHYDRATION__=(.*?);</script>',
+
+            html
+
         )
-        if start == -1:
-            print("SIGI_STATE NOT FOUND")
+
+        if not match:
+
+            print("UNIVERSAL DATA NOT FOUND")
+
             return None
 
-        start = html.find(">", start) + 1
-        end = html.find("</script>", start)
-        json_text = html[start:end]
-        data = json.loads(json_text)
+        data = json.loads(match.group(1))
 
-        # 🔥 ищем любой post item
-        item_module = data.get("ItemModule", {})
-        if not item_module:
-            print("ITEM MODULE EMPTY")
+        default_scope = data["__DEFAULT_SCOPE__"]
+
+        detail = default_scope["webapp.video-detail"]
+
+        item_info = detail["itemInfo"]["itemStruct"]
+
+        images = item_info.get("imagePost", {}).get("images", [])
+
+        if not images:
+
+            print("NO IMAGES")
+
             return None
 
-        first_key = next(iter(item_module))
-        post = item_module[first_key]
-        images = []
-        image_post = post.get("imagePost", {})
-        for img in image_post.get("images", []):
-            image_url = (
-                img.get("imageURL", {})
-                .get("urlList", [])
-            )
+        result = []
 
-            if image_url:
-                images.append(image_url[0])
+        for img in images:
 
-        print("TIKTOK IMAGES:", images)
-        return images if images else None
+            image_url = img["imageURL"]["urlList"][0]
+
+            result.append(image_url)
+
+        return result
 
     except Exception as e:
+
         print("TIKTOK PHOTO ERROR:", e)
+
         return None
