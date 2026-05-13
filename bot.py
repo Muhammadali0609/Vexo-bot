@@ -172,9 +172,15 @@ async def process_video(update, context, url, user_id, platform, event_id):
         if photo_result:
             if isinstance(photo_result, list):
                 for img in photo_result:
-                    await update.message.reply_photo(photo=img)
+                    await update.message.reply_photo(
+                        photo=img,
+                        caption=t(lang, "caption")
+                    )
             else:
-                await update.message.reply_photo(photo=photo_result)
+                await update.message.reply_photo(
+                    photo=photo_result,
+                    caption=t(lang, "caption")
+                )
 
             update_event_status(event_id, "success")
             return
