@@ -1,6 +1,7 @@
 import os
 import asyncio
 import re
+import requests
 
 from telegram import Update
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -25,6 +26,19 @@ def extract_url(text: str):
     if urls:
         return urls[0]
     return None
+
+def resolve_url(url):
+    try:
+        response = requests.get(
+            url,
+            allow_redirects=True,
+            timeout=10
+        )
+        return response.url
+
+    except Exception as e:
+        print("RESOLVE URL ERROR:", e)
+        return url
 
 def register_user(update):
     user = update.effective_user
