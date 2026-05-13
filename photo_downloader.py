@@ -1,5 +1,7 @@
 import aiohttp
+import requests
 import re
+import json
 
 
 # =========================
@@ -52,19 +54,34 @@ async def download_instagram_photo(url: str):
 # =========================
 async def download_tiktok_photo(url: str):
     try:
-        if "tiktok.com" not in url:
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)"
+            )
+        }
+        response = requests.get(url, headers=headers)
+        html = response.text
+        match = re.search(
+            r'<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">(.*?)</script>',
+            html
+        )
+        if not match:
             return None
-
-        async with aiohttp.ClientSession() as session:
-            oembed_url = f"https://www.tiktok.com/oembed?url={url}"
-
-            async with session.get(oembed_url) as r:
-                data = await r.json()
-
-        # TikTok photo posts usually contain thumbnail
-        thumb = data.get("thumbnail_url")
-
-        return thumb
+        data = json.loads(match.group(1))
+        photo_list = (
+            data["__DEFAULT_SCOPE__"]
+            ["webapp.video-detail"]
+            ["itemInfo"]
+            ["itemStruct"]
+            ["imagePost"]
+            ["images"]
+        )
+        images = []
+        for item in photo_list:
+            images.append(
+                item["imageURL"]["urlList"][0]
+            )
+        return images
 
     except Exception as e:
         print("TIKTOK PHOTO ERROR:", e)
