@@ -183,6 +183,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
                 )
 
             update_event_status(event_id, "success")
+            success = True
             return
         
         # 🚀 2. DOWNLOAD VIDEO
