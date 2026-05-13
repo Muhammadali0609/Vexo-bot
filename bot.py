@@ -10,6 +10,7 @@ from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
 from downloader_engine import download_manager, safe_remove, download_audio, get_video_metadata
 from locales import t
+from photo_downloader import download_instagram_photo, download_tiktok_photo
 
 print("🔥 BOT STARTED")
 
@@ -135,6 +136,27 @@ async def process_video(update, context, url, user_id, platform, event_id):
             success = True
             return
 
+        # 🧠 PHOTO CHECK (NEW)
+        photo_result = None
+        
+        if platform == "instagram":
+            photo_result = await download_instagram_photo(url)
+        
+        elif platform == "tiktok":
+            photo_result = await download_tiktok_photo(url)
+        
+        # 📸 если это фото пост
+        if photo_result:
+            if isinstance(photo_result, list):
+                # carousel
+                for img in photo_result:
+                    await update.message.reply_photo(photo=img)
+            else:
+                await update.message.reply_photo(photo=photo_result)
+        
+            update_event_status(event_id, "success")
+            return
+        
         # 🚀 2. DOWNLOAD VIDEO
         async with semaphore:
             file_path = await download_manager(url, platform)
