@@ -30,7 +30,6 @@ def extract_url(text: str):
 def resolve_url(url):
     try:
         print("RESOLVING:", url)
-
         response = requests.get(
             url,
             allow_redirects=True,
