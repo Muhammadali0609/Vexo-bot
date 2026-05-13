@@ -109,6 +109,7 @@ async def handle_message(update, context):
     url = extract_url(text)
     if not url:
         return
+    url = resolve_url(url)
     
     if not is_valid_link(url):
         return
