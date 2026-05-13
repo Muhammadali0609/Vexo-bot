@@ -160,6 +160,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
         
             elif platform == "tiktok":
                 photo_result = await download_tiktok_photo(url)
+                print("PHOTO RESULT:", photo_result)
         
             # ❌ если фото не скачалось
             if not photo_result:
