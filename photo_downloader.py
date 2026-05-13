@@ -55,35 +55,53 @@ async def download_instagram_photo(url: str):
 async def download_tiktok_photo(url: str):
     print("TIKTOK PHOTO URL:", url)
     try:
+        print("TIKTOK PHOTO URL:", url)
         headers = {
             "User-Agent": (
-                "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)"
+                "Mozilla/5.0"
             )
         }
-        response = requests.get(url, headers=headers)
+        response = requests.get(
+            url,
+            headers=headers,
+            timeout=15
+        )
         html = response.text
-        match = re.search(
-            r'<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">(.*?)</script>',
-            html
+        
+        # 🔥 ищем JSON с SIGI_STATE
+        start = html.find(
+            '<script id="SIGI_STATE" type="application/json">'
         )
-        if not match:
-            print("TIKTOK PHOTO FAILED")
+        if start == -1:
+            print("SIGI_STATE NOT FOUND")
             return None
-        data = json.loads(match.group(1))
-        photo_list = (
-            data["__DEFAULT_SCOPE__"]
-            ["webapp.video-detail"]
-            ["itemInfo"]
-            ["itemStruct"]
-            ["imagePost"]
-            ["images"]
-        )
+
+        start = html.find(">", start) + 1
+        end = html.find("</script>", start)
+        json_text = html[start:end]
+        data = json.loads(json_text)
+
+        # 🔥 ищем любой post item
+        item_module = data.get("ItemModule", {})
+        if not item_module:
+            print("ITEM MODULE EMPTY")
+            return None
+
+        first_key = next(iter(item_module))
+        post = item_module[first_key]
         images = []
-        for item in photo_list:
-            images.append(
-                item["imageURL"]["urlList"][0]
+        image_post = post.get("imagePost", {})
+        for img in image_post.get("images", []):
+            image_url = (
+                img.get("imageURL", {})
+                .get("urlList", [])
             )
-        return images
+
+            if image_url:
+                images.append(image_url[0])
+
+        print("TIKTOK IMAGES:", images)
+        return images if images else None
 
     except Exception as e:
         print("TIKTOK PHOTO ERROR:", e)
