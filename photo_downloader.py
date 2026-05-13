@@ -7,37 +7,22 @@ import json
 # =========================
 # 📸 INSTAGRAM PHOTO / CAROUSEL
 # =========================
+RAPID_API_KEY = "adca32e6dbmshe66aeffbf1157c9p19139fjsndd0b2a3c5c1b"
 async def download_instagram_photo(url: str):
+    endpoint = "https://instagram-downloader-api.p.rapidapi.com/download"
     headers = {
-
-        "User-Agent": "Mozilla/5.0"
-
+        "X-RapidAPI-Key": RAPID_API_KEY,
+        "X-RapidAPI-Host": "instagram-downloader-api.p.rapidapi.com"
     }
-
-    async with aiohttp.ClientSession(headers=headers) as session:
-
-        async with session.get(url) as r:
-
-            html = await r.text()
-
-    # ищем изображения
-
-    images = re.findall(r'"display_url":"(https:[^"]+)"', html)
-
-    if not images:
-
+    params = {
+        "url": url
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.get(endpoint, headers=headers, params=params) as r:
+            data = await r.json()
+    if not data or "media" not in data:
         return None
-
-    # decode \u0026
-
-    images = [img.replace("\\u0026", "&") for img in images]
-
-    # убираем дубли
-
-    images = list(dict.fromkeys(images))
-
-    return images
-
+    return data["media"]
 
 # =========================
 # 🎵 TIKTOK PHOTO (oEmbed fallback)
