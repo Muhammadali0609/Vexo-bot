@@ -53,6 +53,7 @@ async def download_instagram_photo(url: str):
 # 🎵 TIKTOK PHOTO (oEmbed fallback)
 # =========================
 async def download_tiktok_photo(url: str):
+    print("TIKTOK PHOTO URL:", url)
     try:
         headers = {
             "User-Agent": (
@@ -66,6 +67,7 @@ async def download_tiktok_photo(url: str):
             html
         )
         if not match:
+            print("TIKTOK PHOTO FAILED")
             return None
         data = json.loads(match.group(1))
         photo_list = (
