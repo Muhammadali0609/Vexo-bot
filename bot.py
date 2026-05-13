@@ -29,11 +29,20 @@ def extract_url(text: str):
 
 def resolve_url(url):
     try:
+        print("RESOLVING:", url)
+
         response = requests.get(
             url,
             allow_redirects=True,
-            timeout=10
+            timeout=10,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0"
+                )
+            }
         )
+
+        print("FINAL URL:", response.url)
         return response.url
 
     except Exception as e:
@@ -109,7 +118,10 @@ async def handle_message(update, context):
     url = extract_url(text)
     if not url:
         return
+        
+    print("URL BEFORE:", url)
     url = resolve_url(url)
+    print("URL AFTER:", url)
     
     if not is_valid_link(url):
         return
