@@ -56,61 +56,23 @@ async def download_tiktok_photo(url: str):
     print("TIKTOK PHOTO URL:", url)
     try:
 
-        headers = {
+        response = requests.post(
 
-            "User-Agent": (
+            "https://tikwm.com/api/",
 
-                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+            data={
 
-                "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+                "url": url
 
-                "Version/17.0 Mobile/15E148 Safari/604.1"
+            },
 
-            )
-
-        }
-
-        response = requests.get(
-
-            url,
-
-            headers=headers,
-
-            allow_redirects=True,
-
-            timeout=15
+            timeout=20
 
         )
 
-        html = response.text
+        data = response.json()
 
-        print("FINAL URL:", response.url)
-
-        # 🔥 Новый TikTok JSON
-
-        match = re.search(
-
-            r'__UNIVERSAL_DATA_FOR_REHYDRATION__=(.*?);</script>',
-
-            html
-
-        )
-
-        if not match:
-
-            print("UNIVERSAL DATA NOT FOUND")
-
-            return None
-
-        data = json.loads(match.group(1))
-
-        default_scope = data["__DEFAULT_SCOPE__"]
-
-        detail = default_scope["webapp.video-detail"]
-
-        item_info = detail["itemInfo"]["itemStruct"]
-
-        images = item_info.get("imagePost", {}).get("images", [])
+        images = data.get("data", {}).get("images")
 
         if not images:
 
@@ -118,15 +80,7 @@ async def download_tiktok_photo(url: str):
 
             return None
 
-        result = []
-
-        for img in images:
-
-            image_url = img["imageURL"]["urlList"][0]
-
-            result.append(image_url)
-
-        return result
+        return images
 
     except Exception as e:
 
