@@ -3,7 +3,7 @@ import asyncio
 import re
 import requests
 
-from telegram import Update
+from telegram import Update, InputMediaPhoto
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
 from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video, update_event_status, init_db, set_user_lang, get_user_lang
@@ -171,17 +171,25 @@ async def process_video(update, context, url, user_id, platform, event_id):
             photo_result = await download_tiktok_photo(url)
         if photo_result:
             if isinstance(photo_result, list):
-                for img in photo_result:
-                    await update.message.reply_photo(
-                        photo=img,
-                        caption=t(lang, "caption")
-                    )
+                media = []
+                for i, img in enumerate(photo_result):
+                    if i == 0:
+                        media.append(
+                            InputMediaPhoto(
+                                media=img,
+                                caption=t(lang, "caption")
+                            ) 
+                        )
+                    else:
+                        media.append(
+                            InputMediaPhoto(media=img)
+                        )
+                await update.message.reply_media_group(media)
             else:
                 await update.message.reply_photo(
                     photo=photo_result,
                     caption=t(lang, "caption")
                 )
-
             update_event_status(event_id, "success")
             success = True
             return
