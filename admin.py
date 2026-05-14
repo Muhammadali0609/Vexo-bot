@@ -129,8 +129,10 @@ async def admin_callback(update, context):
     elif query.data.startswith("user:"):
         _, selected_user_id, page = query.data.split(":")
         user = get_user(selected_user_id)
-        user_id, username, first_name = user
+        user_id, username, first_name, first_seen, last_seen = user
         name = first_name or username or "NoName"
+        first_seen_text = first_seen.strftime("%y.%m.%d %H:%M")
+        last_seen_text = last_seen.strftime("%y.%m.%d %H:%M")
         total = get_user_total_events(selected_user_id)
         success = get_user_success_events(selected_user_id)
         errors = get_user_error_events(selected_user_id)
@@ -138,6 +140,8 @@ async def admin_callback(update, context):
         text = (
             f"👤 {name}\n\n"
             f"🆔 {selected_user_id}\n\n"
+            f"📅 Регистрация: {first_seen_text}\n"
+            f"🕒 Последняя активность: {last_seen_text}\n\n"
             f"📥 Запросы: {total}\n"
             f"✅ Успехи: {success}\n"
             f"❌ Ошибки: {errors}"
