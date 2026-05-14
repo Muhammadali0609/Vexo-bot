@@ -98,7 +98,6 @@ def admin_menu_keyboard():
 async def admin_callback(update, context):
     ban_text = "🚫 Бан"
     query = update.callback_query
-    await query.answer()
 
     user_id = query.from_user.id
 
