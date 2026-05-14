@@ -25,7 +25,6 @@ def get_ydl_opts(platform, file_name):
 
         "retries": 3,
 
-        "cookiefile": "cookies.txt",
         "progress_hooks": [progress_hook],
     }
 
@@ -34,7 +33,16 @@ def get_ydl_opts(platform, file_name):
     # =========================
     if platform == "youtube":
         base.update({
-            "format": "bv*[height<=720]+ba/b",
+            "format": (
+                "bv*[height<=1080][fps<=60]+ba/"
+                "b[height<=1080]"
+            ),
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android"]
+                }
+            },
+            "cookiefile": "cookies/youtube.txt"
         })
 
     # =========================
