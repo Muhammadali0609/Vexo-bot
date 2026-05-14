@@ -31,7 +31,7 @@ def build_users_page(page: int):
 
     keyboard = []
     for i, user in enumerate(users, start=1 + offset):
-        user_id, username, first_name, first_seen = user
+        user_id, username, first_name, first_seen, last_seen = user
         name = first_name if first_name else (username or "NoName")
         date_text = first_seen.strftime("%y.%m.%d %H:%M")
         link = f"tg://user?id={user_id}"
