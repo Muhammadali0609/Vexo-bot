@@ -38,8 +38,12 @@ def get_ydl_opts(platform, file_name):
             "quiet": False,
             "retries": 10,
             "fragment_retries": 10,
-            
-            "cookiefile": "cookies/youtube.txt"
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android"]
+                }
+            },
+            #"cookiefile": "cookies/youtube.txt"
         })
 
     # =========================
