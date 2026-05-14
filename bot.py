@@ -218,6 +218,9 @@ async def process_video(update, context, url, user_id, platform, event_id):
         
         audio_file_id = None
 
+        if platform == "youtube":
+            skip mp3
+
         audio_path = await download_audio(url)
         
         if audio_path and os.path.exists(audio_path):
