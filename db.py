@@ -308,3 +308,27 @@ def is_user_banned(user_id):
         return False
     finally:
         conn.close()
+        
+def ban_user(user_id):
+    conn = get_conn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET is_banned = TRUE WHERE user_id = %s",
+            (user_id,)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+        
+def unban_user(user_id):
+    conn = get_conn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET is_banned = FALSE WHERE user_id = %s",
+            (user_id,)
+        )
+        conn.commit()
+    finally:
+        conn.close()
