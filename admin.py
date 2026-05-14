@@ -139,7 +139,7 @@ async def admin_callback(update, context):
         link = f"tg://user?id={user_id}"
 
         text = (
-            f"👤 <a href="{link}">{name}</a>\n\n"
+            f'👤 <a href="{link}">{name}</a>\n\n'
             f"🆔 {selected_user_id}\n\n"
             f"📅 Регистрация: {first_seen_text}\n"
             f"🕒 Последняя активность: {last_seen_text}\n\n"
