@@ -167,6 +167,7 @@ async def admin_callback(update, context):
         )
     elif query.data.startswith("ban_"):
         target_user_id = int(query.data.split("_")[1])
+        _, selected_user_id, page = query.data.split(":")
 
         if is_user_banned(target_user_id):
             unban_user(target_user_id)
