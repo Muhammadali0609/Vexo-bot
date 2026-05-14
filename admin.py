@@ -12,6 +12,11 @@ from db import (
     get_user_success_events,
     get_user_error_events
 )
+from db import (
+    is_user_banned,
+    ban_user,
+    unban_user
+)
 
 PAGE_SIZE = 10
 ADMINS = {1648220477}  # добавляешь свои ID
@@ -139,28 +144,39 @@ async def admin_callback(update, context):
             f"✅ Успехи: {success}\n"
             f"❌ Ошибки: {errors}"
         )
-
+        ban_text = "🚫 Бан"
+        if is_user_banned(user_id):
+            ban_text = "✅ Разбан"
         keyboard = [
             [
                 InlineKeyboardButton(
-                    "🚫 Бан",
-                    callback_data=f"ban:{selected_user_id}"
+                    ban_text,
+                    callback_data=f"ban_{user_id}"
                 )
             ],
-
             [
                 InlineKeyboardButton(
                     "⬅️ Назад",
                     callback_data=f"users:{page}"
                 )
             ]
-
         ]
-
         await query.edit_message_text(
             text,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+    elif query.data.startswith("ban_"):
+        target_user_id = int(query.data.split("_")[1])
+
+        if is_user_banned(target_user_id):
+            unban_user(target_user_id)
+            text = "✅ Пользователь разбанен"
+
+        else:
+            ban_user(target_user_id)
+            text = "🚫 Пользователь забанен"
+
+        await query.answer(text, show_alert=True)
     elif query.data == "back":
         await query.edit_message_text(
             "🔐 Admin Panel",
