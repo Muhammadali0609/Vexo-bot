@@ -38,14 +38,7 @@ def get_ydl_opts(platform, file_name):
             "quiet": False,
             "retries": 10,
             "fragment_retries": 10,
-            "http_headers": {
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) "
-                    "Chrome/124.0 Safari/537.36"
-                )
-            },
+            
             "cookiefile": "cookies/youtube.txt"
         })
 
