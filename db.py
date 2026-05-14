@@ -76,7 +76,7 @@ def get_users(offset=0, limit=10):
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT user_id, username, first_name
+            SELECT user_id, username, first_name, first_seen, last_seen
             FROM users
             ORDER BY last_seen DESC
             LIMIT %s OFFSET %s
