@@ -179,7 +179,7 @@ def get_user(user_id):
     try:
         cursor = conn.cursor()
         cursor.execute("""
-        SELECT user_id, username, first_name
+        SELECT user_id, username, first_name, first_seen, last_seen
         FROM users
         WHERE user_id = %s
         """, (user_id,))
