@@ -293,3 +293,18 @@ def get_user_lang(user_id):
         return "ru"
     finally:
         conn.close()
+
+def is_user_banned(user_id):
+    conn = get_conn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT is_banned FROM users WHERE user_id = %s",
+            (user_id,)
+        )
+        row = cursor.fetchone()
+        if row:
+            return row[0]
+        return False
+    finally:
+        conn.close()
