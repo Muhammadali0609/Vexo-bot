@@ -33,10 +33,9 @@ def get_ydl_opts(platform, file_name):
     # =========================
     if platform == "youtube":
         base.update({
-            "format": (
-                "bestvideo+bestaudio/"
-                "best"
-            ),
+            "format": "bv*[height<=720]+ba/b",
+            "retries": 10,
+            "fragment_retries": 10,
             "extractor_args": {
                 "youtube": {
                     "player_client": ["android"]
