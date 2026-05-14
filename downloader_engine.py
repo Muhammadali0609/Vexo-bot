@@ -36,11 +36,6 @@ def get_ydl_opts(platform, file_name):
             "format": "best",
             "retries": 10,
             "fragment_retries": 10,
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android", "web"]
-                }
-            },
             "http_headers": {
                 "User-Agent": (
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
