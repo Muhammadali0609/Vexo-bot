@@ -34,8 +34,8 @@ def get_ydl_opts(platform, file_name):
     if platform == "youtube":
         base.update({
             "format": (
-                "bv*[height<=1080][fps<=60]+ba/"
-                "b[height<=1080]"
+                "bestvideo+bestaudio/"
+                "best"
             ),
             "extractor_args": {
                 "youtube": {
