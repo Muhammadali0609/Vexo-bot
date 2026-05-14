@@ -33,7 +33,7 @@ def get_ydl_opts(platform, file_name):
     # =========================
     if platform == "youtube":
         base.update({
-            "format": "bv*+ba/" "b/" "best",
+            "format": "best",
             "retries": 10,
             "fragment_retries": 10,
             "extractor_args": {
