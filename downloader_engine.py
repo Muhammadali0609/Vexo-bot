@@ -34,6 +34,8 @@ def get_ydl_opts(platform, file_name):
     if platform == "youtube":
         base.update({
             "format": "best",
+            "dump_single_json": True,
+            "quiet": False,
             "retries": 10,
             "fragment_retries": 10,
             "http_headers": {
