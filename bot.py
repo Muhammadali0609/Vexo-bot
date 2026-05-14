@@ -126,6 +126,8 @@ async def handle_message(update, context):
         return
 
     user_id = update.effective_user.id
+    if is_user_banned(user_id):
+        return
     lang = get_user_lang(user_id) or "ru"
     platform = detect_platform(url)
     # 📊 2. лог события
