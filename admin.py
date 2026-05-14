@@ -96,6 +96,7 @@ def admin_menu_keyboard():
     ])
 
 async def admin_callback(update, context):
+    ban_text = "🚫 Бан"
     query = update.callback_query
     await query.answer()
 
@@ -144,7 +145,6 @@ async def admin_callback(update, context):
             f"✅ Успехи: {success}\n"
             f"❌ Ошибки: {errors}"
         )
-        ban_text = "🚫 Бан"
         if is_user_banned(user_id):
             ban_text = "✅ Разбан"
         keyboard = [
@@ -167,7 +167,6 @@ async def admin_callback(update, context):
         )
     elif query.data.startswith("ban_"):
         target_user_id = int(query.data.split("_")[1])
-        _, selected_user_id, page = query.data.split(":")
 
         if is_user_banned(target_user_id):
             unban_user(target_user_id)
@@ -187,7 +186,7 @@ async def admin_callback(update, context):
             [
                 InlineKeyboardButton(
                     "⬅️ Назад",
-                    callback_data=f"users:{page}"
+                    callback_data="users:0"
                 )
             ]
         ]
