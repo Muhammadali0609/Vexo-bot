@@ -193,7 +193,7 @@ async def admin_callback(update, context):
         await query.edit_message_reply_markup(
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
-        await query.answer(alert_text, show_alert=True)
+        await query.answer(alert_text)
         
     elif query.data == "back":
         await query.edit_message_text(
