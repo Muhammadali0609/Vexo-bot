@@ -190,11 +190,10 @@ async def admin_callback(update, context):
                 )
             ]
         ]
+        await query.answer(alert_text)
         await query.edit_message_reply_markup(
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
-        await query.answer(alert_text)
-        
     elif query.data == "back":
         await query.edit_message_text(
             "🔐 Admin Panel",
