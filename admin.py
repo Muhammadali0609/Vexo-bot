@@ -170,13 +170,31 @@ async def admin_callback(update, context):
 
         if is_user_banned(target_user_id):
             unban_user(target_user_id)
-            text = "✅ Пользователь разбанен"
-
+            ban_text = "🚫 Бан"
+            alert_text = "✅ Пользователь разбанен"
         else:
             ban_user(target_user_id)
-            text = "🚫 Пользователь забанен"
-
-        await query.answer(text, show_alert=True)
+            ban_text = "✅ Разбан"
+            alert_text = "🚫 Пользователь забанен"
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    ban_text,
+                    callback_data=f"ban_{target_user_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "⬅️ Назад",
+                    callback_data=f"users:{page}"
+                )
+            ]
+        ]
+        await query.edit_message_reply_markup(
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        await query.answer(alert_text, show_alert=True)
+        
     elif query.data == "back":
         await query.edit_message_text(
             "🔐 Admin Panel",
