@@ -136,9 +136,10 @@ async def admin_callback(update, context):
         total = get_user_total_events(selected_user_id)
         success = get_user_success_events(selected_user_id)
         errors = get_user_error_events(selected_user_id)
+        link = f"tg://user?id={user_id}"
 
         text = (
-            f"👤 {name}\n\n"
+            f"👤 <a href="{link}">{name}</a>\n\n"
             f"🆔 {selected_user_id}\n\n"
             f"📅 Регистрация: {first_seen_text}\n"
             f"🕒 Последняя активность: {last_seen_text}\n\n"
@@ -164,7 +165,8 @@ async def admin_callback(update, context):
         ]
         await query.edit_message_text(
             text,
-            reply_markup=InlineKeyboardMarkup(keyboard)
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="HTML"
         )
     elif query.data.startswith("ban_"):
         target_user_id = int(query.data.split("_")[1])
