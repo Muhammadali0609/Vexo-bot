@@ -43,7 +43,7 @@ def get_ydl_opts(platform, file_name):
                     "player_client": ["android"]
                 }
             },
-            #"cookiefile": "cookies/youtube.txt"
+            "cookiefile": "cookies/youtube.txt"
         })
 
     # =========================
