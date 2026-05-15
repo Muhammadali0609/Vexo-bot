@@ -2,26 +2,38 @@ import aiohttp
 import requests
 import re
 import json
+from bs4 import BeautifulSoup
 
 # =========================
 # 📸 INSTAGRAM PHOTO / CAROUSEL
 # =========================
-RAPID_API_KEY = "adca32e6dbmshe66aeffbf1157c9p19139fjsndd0b2a3c5c1b"
 async def download_instagram_photo(url: str):
-    endpoint = "https://instagram-downloader-api.p.rapidapi.com/download"
+    url = url.replace(
+        "instagram.com",
+        "ddinstagram.com"
+    )
     headers = {
-        "X-RapidAPI-Key": RAPID_API_KEY,
-        "X-RapidAPI-Host": "instagram-downloader-api.p.rapidapi.com"
+        "User-Agent": "Mozilla/5.0"
     }
-    params = {
-        "url": url
-    }
-    async with aiohttp.ClientSession() as session:
-        async with session.get(endpoint, headers=headers, params=params) as r:
-            data = await r.json()
-    if not data or "media" not in data:
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url,
+                headers=headers
+            ) as response:
+                html = await response.text()
+        image_urls = re.findall(
+            r'https://[^"]+\.jpg',
+            html
+        )
+        if not image_urls:
+            return None
+            
+        return list(set(image_urls))
+
+    except Exception as e:
+        print("INSTAGRAM ERROR:", e)
         return None
-    return data["media"]
 
 # =========================
 # 🎵 TIKTOK PHOTO (oEmbed fallback)
