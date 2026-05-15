@@ -27,26 +27,6 @@ def extract_url(text: str):
         return urls[0]
     return None
 
-def resolve_url(url):
-    try:
-        print("RESOLVING:", url)
-        response = requests.get(
-            url,
-            allow_redirects=True,
-            timeout=10,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0"
-                )
-            }
-        )
-
-        print("FINAL URL:", response.url)
-        return response.url
-
-    except Exception as e:
-        print("RESOLVE URL ERROR:", e)
-        return url
 
 def register_user(update):
     user = update.effective_user
@@ -112,17 +92,12 @@ async def language_handler(update, context):
 
 # 🔥 обработка сообщений
 async def handle_message(update, context):
-    msg = await update.message.reply_text(t(lang, "loading"))
     register_user(update)
     text = update.message.text or ""
     url = extract_url(text)
     if not url:
         return
         
-    print("URL BEFORE:", url)
-    url = resolve_url(url)
-    print("URL AFTER:", url)
-    
     if not is_valid_link(url):
         return
 
@@ -130,6 +105,7 @@ async def handle_message(update, context):
     if is_user_banned(user_id):
         return
     lang = get_user_lang(user_id) or "ru"
+    msg = await update.message.reply_text(t(lang, "loading"))
     platform = detect_platform(url)
     # 📊 2. лог события
     event_id = add_event(user_id, url, platform, "pending")
