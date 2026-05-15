@@ -11,7 +11,7 @@ from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
 from downloader_engine import download_manager, safe_remove, download_audio, get_video_metadata
 from locales import t
-from photo_downloader import download_instagram_photo, download_tiktok_photo
+from photo_downloader import download_instagram_photo, download_tiktok_media
 
 print("🔥 BOT STARTED")
 
@@ -171,31 +171,44 @@ async def process_video(update, context, url, user_id, platform, event_id):
             photo_result = await download_instagram_photo(url)
             print("PHOTO RESULT:", photo_result)
         elif platform == "tiktok":
-            photo_result = await download_tiktok_photo(url)
+            photo_result = await download_tiktok_media(url)
         if photo_result:
-            if isinstance(photo_result, list):
+            if photo_result.get("type") == "photos":
                 media = []
-                for i, img in enumerate(photo_result):
+                for i, img in enumerate(photo_result["data"]):
                     if i == 0:
                         media.append(
                             InputMediaPhoto(
                                 media=img,
                                 caption=t(lang, "caption")
-                            ) 
+                            )
                         )
                     else:
                         media.append(
                             InputMediaPhoto(media=img)
                         )
                 await update.message.reply_media_group(media)
-            else:
-                await update.message.reply_photo(
-                    photo=photo_result,
-                    caption=t(lang, "caption")
+                update_event_status(event_id, "success")
+                success = True
+                return
+
+            # 🎥 VIDEO
+            elif photo_result.get("type") == "video":
+                sent_msg = await update.message.reply_video(
+                    video=photo_result["data"],
+                    caption=t(lang, "caption"),
+                    supports_streaming=True
                 )
-            update_event_status(event_id, "success")
-            success = True
-            return
+                video_file_id = sent_msg.video.file_id
+                save_cached_video(
+                    url,
+                    video_file_id,
+                    None,
+                    platform
+                )
+                update_event_status(event_id, "success")
+                success = True
+                return
             
         # 🚀 2. DOWNLOAD VIDEO
         async with semaphore:
