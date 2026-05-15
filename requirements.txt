@@ -6,3 +6,4 @@ psycopg2-binary
 aiohttp
 redis
 requests
+beautifulsoup4
