@@ -25,7 +25,18 @@ def init_db():
             last_seen TIMESTAMP
         )
         """)
-    
+
+        cursor.execute("""
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'ru'
+        """)
+        
+        cursor.execute("""
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT FALSE
+        """)
+
+        
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS video_cache (
             id SERIAL PRIMARY KEY,
