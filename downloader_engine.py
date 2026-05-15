@@ -65,8 +65,9 @@ def get_ydl_opts(platform, file_name):
         base.update({
             "format": "best",
             "http_headers": {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        },
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            },
+            "cookies/instagram.txt"
         })
 
     # =========================
