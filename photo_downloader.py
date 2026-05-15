@@ -8,51 +8,77 @@ from bs4 import BeautifulSoup
 # 📸 INSTAGRAM PHOTO / CAROUSEL
 # =========================
 async def download_instagram_photo(url: str):
-    url = re.sub(
+    fixed_url = re.sub(
         r"(www\.)?instagram\.com",
         "ddinstagram.com",
         url
     )
+
     headers = {
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     }
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                url,
+                fixed_url,
                 headers=headers,
-                allow_redirects=True
+                allow_redirects=True,
+                timeout=aiohttp.ClientTimeout(total=20)
             ) as response:
                 html = await response.text()
-        matches = re.findall(
-            r'https:\\/\\/[^"]+',
-            html
-        )
-        result = []
+
+        soup = BeautifulSoup(html, "html.parser")
+
+        videos = []
+        photos = []
+
+        for tag in soup.find_all("meta"):
+            content = tag.get("content")
+            if not content:
+                continue
+
+            if ".mp4" in content:
+                videos.append(content)
+
+            if any(ext in content for ext in [".jpg", ".jpeg", ".png", ".webp"]):
+                photos.append(content)
+
+        matches = re.findall(r'https:\\/\\/[^"]+', html) + re.findall(r'https://[^"\']+', html)
 
         for item in matches:
-            item = item.replace("\\u0026", "&")
-            item = item.replace("\\/", "/")
-            if any(ext in item for ext in [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-            ]):
-                result.append(item)
-        result = list(set(result))
-        print("INSTAGRAM IMAGES:", result)
-        if result:
+            item = item.replace("\\u0026", "&").replace("\\/", "/")
+
+            if ".mp4" in item:
+                videos.append(item)
+
+            if any(ext in item for ext in [".jpg", ".jpeg", ".png", ".webp"]):
+                photos.append(item)
+
+        videos = list(dict.fromkeys(videos))
+        photos = list(dict.fromkeys(photos))
+
+        print("INSTAGRAM VIDEOS:", videos)
+        print("INSTAGRAM IMAGES:", photos)
+
+        if videos:
+            return {
+                "type": "video",
+                "data": videos[0]
+            }
+
+        if photos:
             return {
                 "type": "photos",
-                "data": result
+                "data": photos[:10]
             }
-        
+
         return None
 
     except Exception as e:
         print("INSTAGRAM ERROR:", e)
         return None
+
 # =========================
 # 🎵 TIKTOK PHOTO (oEmbed fallback)
 # =========================
