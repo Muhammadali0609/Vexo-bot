@@ -74,7 +74,7 @@ async def download_youtube_video(url: str):
         if data.get("status") not in ["stream", "redirect"]:
             return None
 
-        return data.get("url")
+        return data
 
     except Exception as e:
         print("YOUTUBE ERROR:", e)
