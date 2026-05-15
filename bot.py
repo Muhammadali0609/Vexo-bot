@@ -208,15 +208,15 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
         
         audio_file_id = None
         
-        audio_path = await download_audio(url)
+        #audio_path = await download_audio(url)
         
-        if audio_path and os.path.exists(audio_path):
-            sent_audio = await update.message.reply_audio(
-                audio=audio_path
-            )
+        #if audio_path and os.path.exists(audio_path):
+            #sent_audio = await update.message.reply_audio(
+                #audio=audio_path
+            #)
 
-            audio_file_id = sent_audio.audio.file_id
-            safe_remove(audio_path)
+            #audio_file_id = sent_audio.audio.file_id
+            #safe_remove(audio_path)
 
         save_cached_video(
             url,
