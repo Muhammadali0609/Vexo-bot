@@ -11,7 +11,7 @@ from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
 from downloader_engine import download_manager, safe_remove, download_audio, get_video_metadata
 from locales import t
-from photo_downloader import download_instagram_photo, download_tiktok_photo, download_youtube_video, download_file
+from photo_downloader import download_instagram_photo, download_tiktok_photo
 
 print("🔥 BOT STARTED")
 
@@ -192,39 +192,6 @@ async def process_video(update, context, url, user_id, platform, event_id):
                     photo=photo_result,
                     caption=t(lang, "caption")
                 )
-            update_event_status(event_id, "success")
-            success = True
-            return
-
-        if platform == "youtube":
-            video_data = await download_youtube_video(url)
-            print(video_data)
-
-            video_url = await download_youtube_video(url)
-        
-            if not video_url:
-                await msg.edit_text(t(lang, "error"))
-                return
-        
-            file_path = await download_file(video_url)
-        
-            sent_msg = await update.message.reply_video(
-                video=file_path,
-                caption=t(lang, "caption"),
-                supports_streaming=True
-            )
-        
-            video_file_id = sent_msg.video.file_id
-        
-            save_cached_video(
-                url,
-                video_file_id,
-                None,
-                platform
-            )
-        
-            safe_remove(file_path)
-        
             update_event_status(event_id, "success")
             success = True
             return
