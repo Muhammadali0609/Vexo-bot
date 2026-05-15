@@ -183,7 +183,7 @@ async def download_audio(url: str):
         "quiet": True,
         "noplaylist": True,
 
-        "cookiefile": "cookies.txt",
+        "cookiefile": "cookies/youtube.txt",
     }
 
     def run():
