@@ -133,15 +133,15 @@ async def handle_message(update, context):
     # 📊 2. лог события
     event_id = add_event(user_id, url, platform, "pending")
     # 🚀 3. запускаем обработку
+    msg = await update.message.reply_text(t(lang, "loading"))
     asyncio.create_task(
-        process_video(update, context, url, user_id, platform, event_id)
+        process_video(update, context, url, user_id, platform, event_id, msg)
     )
     
-async def process_video(update, context, url, user_id, platform, event_id):
+async def process_video(update, context, url, user_id, platform, event_id, msg):
     lang = get_user_lang(user_id) or "ru"
     task_id = id(update)
     ACTIVE_TASKS.add(task_id)
-    msg = await update.message.reply_text(t(lang, "loading"))
     success = False
 
     try:
