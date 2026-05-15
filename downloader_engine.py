@@ -144,8 +144,9 @@ def get_video_metadata(file_path):
 # =========================
 async def download_manager(url: str, platform: str):
     last_error = None
-
-    for attempt in range(3):
+    
+    attempts = 1 if platform == "instagram" else 3
+    for attempt in range(attempts):
         try:
             print(f"TRY PRIMARY {attempt + 1}/3")
             file_path = await try_yt_dlp(url, platform)
@@ -158,11 +159,13 @@ async def download_manager(url: str, platform: str):
             last_error = e
 
         await asyncio.sleep(1.5)
-
+    if platform == "instagram":
+        print("INSTAGRAM YT-DLP FAILED ONCE, SKIP RETRIES")
+        return None
     # 🔁 fallback
     try:
         print("TRY ALT ENGINE")
-        file_path = await try_yt_dlp(url, platform)
+        file_path = await try_yt_dlp_alt(url, platform)
 
         if file_path and os.path.exists(file_path):
             return file_path
