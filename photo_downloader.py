@@ -51,27 +51,26 @@ async def download_instagram_photo(url: str):
 # 🎵 TIKTOK PHOTO (oEmbed fallback)
 # =========================
 async def download_tiktok_media(url: str):
-    print("TIKTOK URL:", url)
     try:
-        response = requests.post(
-            "https://tikwm.com/api/",
-            data={
-                "url": url
-            },
-            timeout=20
-        )
-        data = response.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://tikwm.com/api/",
+                data={"url": url},
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as response:
+                data = await response.json()
+        print("TIKTOK:", data)
         media_data = data.get("data", {})
 
-        # 📸 PHOTO POST
+        # PHOTO POST
         images = media_data.get("images")
         if images:
             return {
                 "type": "photos",
                 "data": images
             }
-
-        # 🎥 VIDEO
+            
+        # VIDEO
         video_url = media_data.get("play")
         if video_url:
             return {
