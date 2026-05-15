@@ -42,7 +42,13 @@ async def download_instagram_photo(url: str):
                 result.append(item)
         result = list(set(result))
         print("INSTAGRAM IMAGES:", result)
-        return result if result else None
+        if result:
+            return {
+                "type": "photos",
+                "data": result
+            }
+        
+        return None
 
     except Exception as e:
         print("INSTAGRAM ERROR:", e)
