@@ -2,6 +2,7 @@ import aiohttp
 import requests
 import re
 import json
+import tempfile
 
 # =========================
 # 📸 INSTAGRAM PHOTO / CAROUSEL
@@ -78,3 +79,24 @@ async def download_youtube_video(url: str):
     except Exception as e:
         print("YOUTUBE ERROR:", e)
         return None
+
+async def download_file(url):
+
+    temp_file = tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=".mp4"
+    )
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+
+            with open(temp_file.name, "wb") as f:
+                while True:
+                    chunk = await response.content.read(1024 * 256)
+
+                    if not chunk:
+                        break
+
+                    f.write(chunk)
+
+    return temp_file.name
