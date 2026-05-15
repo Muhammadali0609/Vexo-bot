@@ -197,6 +197,8 @@ async def process_video(update, context, url, user_id, platform, event_id):
             return
 
         if platform == "youtube":
+            video_data = await download_youtube_video(url)
+            print(video_data)
 
             video_url = await download_youtube_video(url)
         
