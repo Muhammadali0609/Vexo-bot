@@ -50,8 +50,8 @@ async def download_instagram_photo(url: str):
 # =========================
 # 🎵 TIKTOK PHOTO (oEmbed fallback)
 # =========================
-async def download_tiktok_photo(url: str):
-    print("TIKTOK PHOTO URL:", url)
+async def download_tiktok_media(url: str):
+    print("TIKTOK URL:", url)
     try:
         response = requests.post(
             "https://tikwm.com/api/",
@@ -61,37 +61,25 @@ async def download_tiktok_photo(url: str):
             timeout=20
         )
         data = response.json()
-        images = data.get("data", {}).get("images")
-        if not images:
-            print("NO IMAGES")
-            return None
-        return images
-    except Exception as e:
-        print("TIKTOK PHOTO ERROR:", e)
+        media_data = data.get("data", {})
+
+        # 📸 PHOTO POST
+        images = media_data.get("images")
+        if images:
+            return {
+                "type": "photos",
+                "data": images
+            }
+
+        # 🎥 VIDEO
+        video_url = media_data.get("play")
+        if video_url:
+            return {
+                "type": "video",
+                "data": video_url
+            }
         return None
 
-async def download_tiktok_video(url: str):
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://tikwm.com/api/",
-                data={"url": url},
-                timeout=aiohttp.ClientTimeout(total=30)
-            ) as response:
-
-                data = await response.json()
-
-        print("TIKTOK:", data)
-
-        video_url = (
-            data.get("data", {}).get("play")
-        )
-
-        if not video_url:
-            return None
-
-        return video_url
-
     except Exception as e:
-        print("TIKTOK VIDEO ERROR:", e)
+        print("TIKTOK ERROR:", e)
         return None
