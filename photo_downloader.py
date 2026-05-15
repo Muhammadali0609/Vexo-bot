@@ -8,9 +8,10 @@ from bs4 import BeautifulSoup
 # 📸 INSTAGRAM PHOTO / CAROUSEL
 # =========================
 async def download_instagram_photo(url: str):
-    url = url.replace(
-        "instagram.com",
-        "ddinstagram.com"
+    url = re.sub(
+        r"(www\.)?instagram\.com",
+        "ddinstagram.com",
+        url
     )
     headers = {
         "User-Agent": "Mozilla/5.0"
@@ -19,22 +20,33 @@ async def download_instagram_photo(url: str):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url,
-                headers=headers
+                headers=headers,
+                allow_redirects=True
             ) as response:
                 html = await response.text()
-        image_urls = re.findall(
-            r'https://[^"]+\.jpg',
+        matches = re.findall(
+            r'https:\\/\\/[^"]+',
             html
         )
-        if not image_urls:
-            return None
-            
-        return list(set(image_urls))
+        result = []
+
+        for item in matches:
+            item = item.replace("\\u0026", "&")
+            item = item.replace("\\/", "/")
+            if any(ext in item for ext in [
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".webp"
+            ]):
+                result.append(item)
+        result = list(set(result))
+        print("INSTAGRAM IMAGES:", result)
+        return result if result else None
 
     except Exception as e:
         print("INSTAGRAM ERROR:", e)
         return None
-
 # =========================
 # 🎵 TIKTOK PHOTO (oEmbed fallback)
 # =========================
