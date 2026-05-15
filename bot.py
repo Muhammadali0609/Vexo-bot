@@ -169,6 +169,7 @@ async def process_video(update, context, url, user_id, platform, event_id):
 
         if platform == "instagram":
             photo_result = await download_instagram_photo(url)
+            print("PHOTO RESULT:", photo_result)
         elif platform == "tiktok":
             photo_result = await download_tiktok_photo(url)
         if photo_result:
