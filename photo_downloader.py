@@ -1,32 +1,54 @@
-import aiohttp
-import requests
-import re
 import json
-from bs4 import BeautifulSoup
+import os
+import re
+import uuid
 from html import unescape
+from urllib.parse import urlparse
 
-# =========================
-# 📸 INSTAGRAM PHOTO / CAROUSEL
-# =========================
+import aiohttp
+from bs4 import BeautifulSoup
+
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     "Accept": "application/json, text/javascript, */*; q=0.01",
     "X-Requested-With": "XMLHttpRequest",
 }
 
+DOWNLOAD_HEADERS = {
+    "User-Agent": HEADERS["User-Agent"],
+    "Accept": "*/*",
+    "Referer": "https://www.instagram.com/",
+}
 
 PHOTO_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 VIDEO_EXTENSIONS = (".mp4", ".mov")
+MAX_FILE_SIZE = 49 * 1024 * 1024
+
+
+def make_connector():
+    try:
+        resolver = aiohttp.AsyncResolver(nameservers=["1.1.1.1", "8.8.8.8"])
+        return aiohttp.TCPConnector(resolver=resolver, ttl_dns_cache=300)
+    except Exception as e:
+        print("CUSTOM DNS DISABLED:", e)
+        return aiohttp.TCPConnector(ttl_dns_cache=300)
+
+
+def is_reel_url(url):
+    return "/reel/" in url or "/reels/" in url or "/tv/" in url
 
 
 def clean_url(value):
     if not value:
         return None
 
-    value = str(value)
-    value = unescape(value)
+    value = unescape(str(value))
     value = value.replace("\\/", "/").replace("\\u0026", "&")
     value = value.strip().strip("\"'")
+
+    if value.startswith("//"):
+        value = "https:" + value
 
     if not value.startswith("http"):
         return None
@@ -63,26 +85,19 @@ def add_media(items, url, forced_type=None):
     if any(item["url"] == url for item in items):
         return
 
-    items.append({
-        "type": media_type,
-        "url": url
-    })
+    items.append({"type": media_type, "url": url})
 
 
 def collect_media_from_text(text):
     items = []
-
     if not text:
         return items
 
     text = unescape(str(text))
     text = text.replace("\\/", "/").replace("\\u0026", "&")
 
-    urls = re.findall(r"https?://[^\s\"'<>]+", text)
-
-    for url in urls:
-        url = url.split("\\")[0]
-        url = url.rstrip(".,);]")
+    for url in re.findall(r"https?://[^\s\"'<>]+", text):
+        url = url.split("\\")[0].rstrip(".,);]")
         add_media(items, url)
 
     return items
@@ -90,13 +105,22 @@ def collect_media_from_text(text):
 
 def collect_media_from_html(html):
     items = []
-
     if not html:
         return items
 
     soup = BeautifulSoup(html, "html.parser")
 
-    # Сначала берем ссылки с download-кнопок, чтобы не схватить preview/thumbnail.
+    for prop in ("og:video", "og:video:secure_url", "twitter:player:stream"):
+        tag = soup.find("meta", attrs={"property": prop}) or soup.find("meta", attrs={"name": prop})
+        if tag:
+            add_media(items, tag.get("content"), "video")
+
+    for tag in soup.find_all(["video", "source"]):
+        add_media(items, tag.get("src"), "video")
+
+    if items:
+        return items
+
     for tag in soup.find_all("a"):
         href = tag.get("href") or tag.get("data-href")
         text = tag.get_text(" ", strip=True).lower()
@@ -108,15 +132,10 @@ def collect_media_from_html(html):
     if items:
         return items
 
-    for tag in soup.find_all(["video", "source"]):
-        add_media(items, tag.get("src"), "video")
-
-    if items:
-        return items
-
-    for tag in soup.find_all("img"):
-        src = tag.get("src") or tag.get("data-src")
-        add_media(items, src, "photo")
+    for prop in ("og:image", "og:image:secure_url", "twitter:image"):
+        tag = soup.find("meta", attrs={"property": prop}) or soup.find("meta", attrs={"name": prop})
+        if tag:
+            add_media(items, tag.get("content"), "photo")
 
     if items:
         return items
@@ -129,11 +148,9 @@ def payload_strings(payload):
 
     if isinstance(payload, str):
         result.append(payload)
-
     elif isinstance(payload, dict):
         for value in payload.values():
             result.extend(payload_strings(value))
-
     elif isinstance(payload, list):
         for value in payload:
             result.extend(payload_strings(value))
@@ -155,6 +172,95 @@ def parse_service_payload(payload):
     return items
 
 
+def filter_items_for_source(source_url, items):
+    if is_reel_url(source_url):
+        videos = [item for item in items if item["type"] == "video"]
+        return videos
+
+    return items
+
+
+def extension_for(url, media_type):
+    path = urlparse(str(url)).path.lower()
+    ext = os.path.splitext(path)[1]
+
+    if media_type == "video" and ext in VIDEO_EXTENSIONS:
+        return ext
+
+    if media_type == "photo" and ext in PHOTO_EXTENSIONS:
+        return ext
+
+    return ".mp4" if media_type == "video" else ".jpg"
+
+
+async def download_media_file(session, item):
+    url = item["url"]
+    media_type = item["type"]
+
+    try:
+        async with session.get(
+            url,
+            headers=DOWNLOAD_HEADERS,
+            timeout=aiohttp.ClientTimeout(total=60),
+            allow_redirects=True
+        ) as response:
+            if response.status != 200:
+                print("MEDIA DOWNLOAD STATUS:", response.status, url)
+                return None
+
+            content_type = response.headers.get("Content-Type", "").lower()
+
+            if "text/html" in content_type:
+                print("MEDIA DOWNLOAD HTML INSTEAD OF MEDIA:", url)
+                return None
+
+            if "video" in content_type:
+                media_type = "video"
+            elif "image" in content_type:
+                media_type = "photo"
+
+            os.makedirs("downloads", exist_ok=True)
+            file_path = f"downloads/{uuid.uuid4()}{extension_for(response.url, media_type)}"
+
+            total = 0
+            with open(file_path, "wb") as file:
+                async for chunk in response.content.iter_chunked(64 * 1024):
+                    if not chunk:
+                        continue
+
+                    total += len(chunk)
+
+                    if total > MAX_FILE_SIZE:
+                        file.close()
+                        os.remove(file_path)
+                        print("MEDIA TOO LARGE:", url)
+                        return None
+
+                    file.write(chunk)
+
+            if total < 1024:
+                os.remove(file_path)
+                print("MEDIA TOO SMALL:", url)
+                return None
+
+            return {"type": media_type, "url": file_path}
+
+    except Exception as e:
+        print("MEDIA DOWNLOAD ERROR:", e)
+        return None
+
+
+async def materialize_items(session, items):
+    local_items = []
+
+    for item in items[:10]:
+        local_item = await download_media_file(session, item)
+        if local_item:
+            local_items.append(local_item)
+
+    return local_items
+
+
 def build_result(items):
     clean_items = []
 
@@ -171,25 +277,21 @@ def build_result(items):
     if len(clean_items) == 1:
         item = clean_items[0]
         if item["type"] == "video":
-            return {
-                "type": "video",
-                "data": item["url"]
-            }
+            return {"type": "video", "data": item["url"], "local": True}
 
-        return {
-            "type": "photos",
-            "data": [item["url"]]
-        }
+        return {"type": "photos", "data": [item["url"]], "local": True}
 
     if all(item["type"] == "photo" for item in clean_items):
         return {
             "type": "photos",
-            "data": [item["url"] for item in clean_items]
+            "data": [item["url"] for item in clean_items],
+            "local": True,
         }
 
     return {
         "type": "media_group",
-        "data": clean_items
+        "data": clean_items,
+        "local": True,
     }
 
 
@@ -298,10 +400,18 @@ async def try_public_page(session, url):
 
 
 async def download_instagram_photo(url: str):
-    async with aiohttp.ClientSession() as session:
+    connector = make_connector()
+
+    async with aiohttp.ClientSession(connector=connector) as session:
         for downloader in (try_saveig, try_snapinsta, try_public_page):
             items = await downloader(session, url)
-            result = build_result(items)
+            items = filter_items_for_source(url, items)
+
+            if not items:
+                continue
+
+            local_items = await materialize_items(session, items)
+            result = build_result(local_items)
 
             if result:
                 print("INSTAGRAM RESULT:", result)
