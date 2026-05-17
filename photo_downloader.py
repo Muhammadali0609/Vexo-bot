@@ -21,7 +21,7 @@ DOWNLOAD_HEADERS = {
 PHOTO_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 VIDEO_EXTENSIONS = (".mp4", ".mov")
 MAX_FILE_SIZE = 49 * 1024 * 1024
-
+INSTAGRAM_LOADER = None
 
 def make_connector():
     return aiohttp.TCPConnector(
