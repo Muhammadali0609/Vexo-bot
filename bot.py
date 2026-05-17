@@ -197,14 +197,12 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                             safe_remove(photo)
 
                 opened_files = []
-                try:
-                    first_group = True
-                
+                try:            
                     for group in chunks(photos, 10):
                         media = []
                 
                         for i, img in enumerate(group):
-                            caption = t(lang, "caption") if first_group and i == 0 else None
+                            caption = t(lang, "caption") if i == 0 else None
                             media_value = img
                 
                             if is_local and os.path.exists(img):
@@ -220,7 +218,6 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                             )
                 
                         await update.message.reply_media_group(media)
-                        first_group = False
                 
                     update_event_status(event_id, "success")
                     success = True
@@ -265,13 +262,11 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
             elif photo_result.get("type") == "media_group":
                 opened_files = []
                 try:
-                    first_group = True
-                
                     for group in chunks(photo_result["data"], 10):
                         media = []
                 
                         for i, item in enumerate(group):
-                            caption = t(lang, "caption") if first_group and i == 0 else None
+                            caption = t(lang, "caption") if i == 0 else None
                             media_value = item["url"]
                 
                             if is_local and os.path.exists(media_value):
@@ -295,7 +290,6 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                                 )
                 
                         await update.message.reply_media_group(media)
-                        first_group = False
                 
                     update_event_status(event_id, "success")
                     success = True
