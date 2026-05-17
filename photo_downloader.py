@@ -9,8 +9,24 @@ from instaloader import Instaloader, Post, Profile
 
 from urllib.parse import urlparse
 from aiohttp.resolver import ThreadedResolver
-
 import aiohttp
+
+import requests
+
+urls = [
+    "https://snapinsta.app/",
+    "https://igram.world/",
+    "https://saveinsta.app/",
+]
+
+for url in urls:
+    try:
+        r = requests.get(url, timeout=15, headers={
+            "User-Agent": "Mozilla/5.0"
+        })
+        print(url, r.status_code, r.text[:100])
+    except Exception as e:
+        print(url, "ERROR:", e)
 
 DOWNLOAD_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
