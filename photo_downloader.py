@@ -87,7 +87,7 @@ async def download_media_file(session, item):
 
             total = 0
             with open(file_path, "wb") as file:
-                async for chunk in response.content.iter_chunked(64 * 1024):
+                async for chunk in response.content.iter_chunked(512 * 1024):
                     if not chunk:
                         continue
 
@@ -112,17 +112,20 @@ async def download_media_file(session, item):
         print("MEDIA DOWNLOAD ERROR:", e)
         return None
 
+MEDIA_DOWNLOAD_CONCURRENCY = 3
 
 async def materialize_items(session, items):
-    local_items = []
+    semaphore = asyncio.Semaphore(MEDIA_DOWNLOAD_CONCURRENCY)
 
-    for item in items:
-        local_item = await download_media_file(session, item)
-        if local_item:
-            local_items.append(local_item)
+    async def download_one(item):
+        async with semaphore:
+            return await download_media_file(session, item)
 
-    return local_items
+    results = await asyncio.gather(
+        *(download_one(item) for item in items)
+    )
 
+    return [item for item in results if item]
 
 def build_result(items):
     clean_items = []
