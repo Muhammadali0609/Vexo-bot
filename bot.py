@@ -315,16 +315,21 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
 
                 try:
                     if is_local and os.path.exists(video_data):
+                        width, height = get_video_metadata(video_data)
                         with open(video_data, "rb") as file:
                             sent_msg = await update.message.reply_video(
                                 video=file,
                                 caption=t(lang, "caption"),
+                                width=width,
+                                height=height,
                                 supports_streaming=True
                             )
                     else:
                         sent_msg = await update.message.reply_video(
                             video=video_data,
                             caption=t(lang, "caption"),
+                            width=width,
+                            height=height,
                             supports_streaming=True
                         )
 
@@ -361,10 +366,18 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                                 media_value = file
                 
                             if item["type"] == "video":
+                                if is_local and os.path.exists(item["url"]):
+                                    width, height = get_video_metadata(item["url"])
+                                else:
+                                    width, height = None, None
+                            
                                 media.append(
                                     InputMediaVideo(
                                         media=media_value,
-                                        caption=caption
+                                        caption=caption,
+                                        width=width,
+                                        height=height,
+                                        supports_streaming=True
                                     )
                                 )
                             else:
