@@ -4,6 +4,7 @@ TEXTS = {
         "error": "⚠️ Видео недоступно, попробуйте снова",
         "loading": "⏳",
         "caption": "✅ Скачано через @Vexoapp_bot",
+        "story_unavailable": "⚠️ Сторис сейчас недоступен",
     },
 
     "uz": {
@@ -11,6 +12,7 @@ TEXTS = {
         "error": "⚠️ Video yuklab bo‘lmadi, qayta urinib ko‘ring",
         "loading": "⏳",
         "caption": "✅ @Vexoapp_bot orqali yuklandi",
+        "story_unavailable": "⚠️ Stories hozircha mavjud emas",
     }
 }
 
