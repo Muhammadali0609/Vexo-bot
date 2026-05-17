@@ -16,6 +16,7 @@ from photo_downloader import download_instagram_photo, download_tiktok_media
 print("🔥 BOT STARTED")
 
 semaphore = asyncio.Semaphore(2)
+instagram_semaphore = asyncio.Semaphore(1)
 ACTIVE_TASKS = set()
 
 # 🔥 создаём Telegram приложение
@@ -156,7 +157,8 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
         photo_result = None
 
         if platform == "instagram":
-            photo_result = await download_instagram_photo(url)
+            async with instagram_semaphore:
+                photo_result = await download_instagram_photo(url)
             print("PHOTO RESULT:", photo_result)
         elif platform == "tiktok":
             photo_result = await download_tiktok_media(url)
