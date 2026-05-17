@@ -6,7 +6,7 @@ import requests
 from telegram import Update, InputMediaPhoto, InputMediaVideo
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
-from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video, update_event_status, init_db, set_user_lang, get_user_lang, is_user_banned
+from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video, update_event_status, init_db, set_user_lang, get_user_lang, is_user_banned, get_cached_media, save_cached_media
 from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
 from downloader_engine import download_manager, safe_remove, download_audio, get_video_metadata
@@ -74,6 +74,46 @@ def chunks(items, size=10):
     for i in range(0, len(items), size):
         yield items[i:i + size]
 
+def media_item_from_message(message):
+    if message.video:
+        return {"type": "video", "file_id": message.video.file_id}
+
+    if message.photo:
+        return {"type": "photo", "file_id": message.photo[-1].file_id}
+
+    return None
+
+async def send_cached_media(update, lang, cached):
+    media_type, items = cached
+
+    if media_type == "video":
+        await update.message.reply_video(
+            video=items[0]["file_id"],
+            caption=t(lang, "caption"),
+            supports_streaming=True
+        )
+        return
+
+    if media_type == "photo":
+        await update.message.reply_photo(
+            photo=items[0]["file_id"],
+            caption=t(lang, "caption")
+        )
+        return
+
+    for group in chunks(items, 10):
+        media = []
+
+        for i, item in enumerate(group):
+            caption = t(lang, "caption") if i == 0 else None
+
+            if item["type"] == "video":
+                media.append(InputMediaVideo(media=item["file_id"], caption=caption))
+            else:
+                media.append(InputMediaPhoto(media=item["file_id"], caption=caption))
+
+        await update.message.reply_media_group(media)
+
 async def start(update, context):
     keyboard = [
         [
@@ -139,6 +179,14 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
 
     try:
         # 🧠 1. CACHE CHECK
+        cached_media = get_cached_media(url)
+
+        if cached_media:
+            await send_cached_media(update, lang, cached_media)
+            update_event_status(event_id, "success")
+            success = True
+            return
+        
         cached = get_cached_video(url)
 
         if cached:
@@ -178,16 +226,23 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                     try:
                         if is_local and os.path.exists(photo):
                             with open(photo, "rb") as file:
-                                await update.message.reply_photo(
+                                sent_msg = await update.message.reply_photo(
                                     photo=file,
                                     caption=t(lang, "caption")
                                 )
                         else:
-                            await update.message.reply_photo(
+                            sent_msg = await update.message.reply_photo(
                                 photo=photo,
                                 caption=t(lang, "caption")
                             )
-
+                        
+                        save_cached_media(
+                            url,
+                            "photo",
+                            [{"type": "photo", "file_id": sent_msg.photo[-1].file_id}],
+                            platform
+                        )
+                        
                         update_event_status(event_id, "success")
                         success = True
                         return
@@ -195,7 +250,8 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                     finally:
                         if is_local:
                             safe_remove(photo)
-
+                            
+                cached_items = []
                 opened_files = []
                 try:            
                     for group in chunks(photos, 10):
@@ -217,8 +273,14 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                                 )
                             )
                 
-                        await update.message.reply_media_group(media)
-                
+                        sent_messages = await update.message.reply_media_group(media)
+                        for sent in sent_messages:
+                             cached_item = media_item_from_message(sent)
+                             if cached_item:
+                                 cached_items.append(cached_item)
+
+                    if cached_items:
+                        save_cached_media(url, "photos", cached_items, platform)
                     update_event_status(event_id, "success")
                     success = True
                     return
@@ -251,6 +313,12 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
 
                     video_file_id = sent_msg.video.file_id
                     save_cached_video(url, video_file_id, None, platform)
+                    save_cached_media(
+                        url,
+                        "video",
+                        [{"type": "video", "file_id": video_file_id}],
+                        platform
+                    )
                     update_event_status(event_id, "success")
                     success = True
                     return
@@ -260,6 +328,7 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                         safe_remove(video_data)
 
             elif photo_result.get("type") == "media_group":
+                cached_items = []
                 opened_files = []
                 try:
                     for group in chunks(photo_result["data"], 10):
@@ -289,8 +358,14 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                                     )
                                 )
                 
-                        await update.message.reply_media_group(media)
-                
+                        sent_messages = await update.message.reply_media_group(media)
+                        for sent in sent_messages:
+                            cached_item = media_item_from_message(sent)
+                            if cached_item:
+                                cached_items.append(cached_item)
+
+                    if cached_items:
+                        save_cached_media(url, "media_group", cached_items, platform)                
                     update_event_status(event_id, "success")
                     success = True
                     return
@@ -351,6 +426,13 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
             audio_file_id,
             platform
         )
+        save_cached_media(
+            url,
+            "video",
+            [{"type": "video", "file_id": video_file_id}],
+            platform
+        )
+
         safe_remove(file_path)
         update_event_status(event_id, "success")
         success = True
