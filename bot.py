@@ -155,68 +155,137 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
         elif platform == "tiktok":
             photo_result = await download_tiktok_media(url)
         if photo_result:
+            is_local = photo_result.get("local", False)
+
             if photo_result.get("type") == "photos":
-                media = []
-                for i, img in enumerate(photo_result["data"]):
-                    if i == 0:
-                        media.append(
-                            InputMediaPhoto(
-                                media=img,
+                photos = photo_result["data"]
+
+                if len(photos) == 1:
+                    photo = photos[0]
+
+                    try:
+                        if is_local and os.path.exists(photo):
+                            with open(photo, "rb") as file:
+                                await update.message.reply_photo(
+                                    photo=file,
+                                    caption=t(lang, "caption")
+                                )
+                        else:
+                            await update.message.reply_photo(
+                                photo=photo,
                                 caption=t(lang, "caption")
                             )
-                        )
-                    else:
-                        media.append(
-                            InputMediaPhoto(media=img)
-                        )
-                await update.message.reply_media_group(media)
-                update_event_status(event_id, "success")
-                success = True
-                return
 
-            # 🎥 VIDEO
-            elif photo_result.get("type") == "video":
-                sent_msg = await update.message.reply_video(
-                    video=photo_result["data"],
-                    caption=t(lang, "caption"),
-                    supports_streaming=True
-                )
-                video_file_id = sent_msg.video.file_id
-                save_cached_video(
-                    url,
-                    video_file_id,
-                    None,
-                    platform
-                )
-                update_event_status(event_id, "success")
-                success = True
-                return
-                
-            elif photo_result.get("type") == "media_group":
+                        update_event_status(event_id, "success")
+                        success = True
+                        return
+
+                    finally:
+                        if is_local:
+                            safe_remove(photo)
+
                 media = []
+                opened_files = []
 
-                for i, item in enumerate(photo_result["data"][:10]):
-                    caption = t(lang, "caption") if i == 0 else None
+                try:
+                    for i, img in enumerate(photos[:10]):
+                        caption = t(lang, "caption") if i == 0 else None
+                        media_value = img
 
-                    if item["type"] == "video":
-                        media.append(
-                            InputMediaVideo(
-                                media=item["url"],
-                                caption=caption
-                            )
-                        )
-                    else:
+                        if is_local and os.path.exists(img):
+                            file = open(img, "rb")
+                            opened_files.append(file)
+                            media_value = file
+
                         media.append(
                             InputMediaPhoto(
-                                media=item["url"],
+                                media=media_value,
                                 caption=caption
                             )
                         )
 
-                await update.message.reply_media_group(media)
-                update_event_status(event_id, "success")
-                success = True
-                return
+                    await update.message.reply_media_group(media)
+                    update_event_status(event_id, "success")
+                    success = True
+                    return
+
+                finally:
+                    for file in opened_files:
+                        file.close()
+
+                    if is_local:
+                        for img in photos:
+                            safe_remove(img)
+
+            elif photo_result.get("type") == "video":
+                video_data = photo_result["data"]
+
+                try:
+                    if is_local and os.path.exists(video_data):
+                        with open(video_data, "rb") as file:
+                            sent_msg = await update.message.reply_video(
+                                video=file,
+                                caption=t(lang, "caption"),
+                                supports_streaming=True
+                            )
+                    else:
+                        sent_msg = await update.message.reply_video(
+                            video=video_data,
+                            caption=t(lang, "caption"),
+                            supports_streaming=True
+                        )
+
+                    video_file_id = sent_msg.video.file_id
+                    save_cached_video(url, video_file_id, None, platform)
+                    update_event_status(event_id, "success")
+                    success = True
+                    return
+
+                finally:
+                    if is_local:
+                        safe_remove(video_data)
+
+            elif photo_result.get("type") == "media_group":
+                media = []
+                opened_files = []
+
+                try:
+                    for i, item in enumerate(photo_result["data"][:10]):
+                        caption = t(lang, "caption") if i == 0 else None
+                        media_value = item["url"]
+
+                        if is_local and os.path.exists(media_value):
+                            file = open(media_value, "rb")
+                            opened_files.append(file)
+                            media_value = file
+
+                        if item["type"] == "video":
+                            media.append(
+                                InputMediaVideo(
+                                    media=media_value,
+                                    caption=caption
+                                )
+                            )
+                        else:
+                            media.append(
+                                InputMediaPhoto(
+                                    media=media_value,
+                                    caption=caption
+                                )
+                            )
+
+                    await update.message.reply_media_group(media)
+                    update_event_status(event_id, "success")
+                    success = True
+                    return
+
+                finally:
+                    for file in opened_files:
+                        file.close()
+
+                    if is_local:
+                        for item in photo_result["data"]:
+                            safe_remove(item["url"])
         
 
         if platform == "instagram" and is_instagram_story(url):
