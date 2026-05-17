@@ -2,6 +2,7 @@ import json
 import os
 import re
 import uuid
+import socket
 from html import unescape
 from urllib.parse import urlparse
 
@@ -27,17 +28,18 @@ MAX_FILE_SIZE = 49 * 1024 * 1024
 
 
 def make_connector():
-    try:
-        resolver = aiohttp.AsyncResolver(nameservers=["1.1.1.1", "8.8.8.8"])
-        return aiohttp.TCPConnector(resolver=resolver, ttl_dns_cache=300)
-    except Exception as e:
-        print("CUSTOM DNS DISABLED:", e)
-        return aiohttp.TCPConnector(ttl_dns_cache=300)
+    return aiohttp.TCPConnector(
+        family=socket.AF_INET,
+        ttl_dns_cache=300
+    )
 
 
 def is_reel_url(url):
     return "/reel/" in url or "/reels/" in url or "/tv/" in url
-
+def is_story_url(url):
+    return "/stories/" in url
+def is_post_url(url):
+    return "/p/" in url
 
 def clean_url(value):
     if not value:
@@ -319,6 +321,38 @@ async def post_form(session, endpoint, data, referer):
 
         return response.status, payload
 
+async def try_igdownloader(session, url):
+    endpoints = [
+        ("https://v3.igdownloader.app/api/ajaxSearch", "https://igdownloader.app/en"),
+    ]
+
+    for endpoint, referer in endpoints:
+        try:
+            status, payload = await post_form(
+                session,
+                endpoint,
+                {
+                    "recaptchaToken": "",
+                    "q": url,
+                    "t": "media",
+                    "lang": "en"
+                },
+                referer
+            )
+
+            print("IGDOWNLOADER STATUS:", status)
+
+            if status == 200:
+                items = parse_service_payload(payload)
+                if items:
+                    print("IGDOWNLOADER ITEMS:", items)
+                    return items
+
+        except Exception as e:
+            print("IGDOWNLOADER ERROR:", e)
+
+    return []
+
 
 async def try_saveig(session, url):
     endpoints = [
@@ -331,7 +365,12 @@ async def try_saveig(session, url):
             status, payload = await post_form(
                 session,
                 endpoint,
-                {"q": url, "t": "media", "lang": "en"},
+                {
+                    "recaptchaToken": "",
+                    "q": url,
+                    "t": "media",
+                    "lang": "en"
+                },
                 referer
             )
 
@@ -360,7 +399,11 @@ async def try_snapinsta(session, url):
             status, payload = await post_form(
                 session,
                 endpoint,
-                {"url": url},
+                {
+                    "url": url,
+                    "action": "post",
+                    "lang": "en"
+                },
                 referer
             )
 
@@ -379,6 +422,10 @@ async def try_snapinsta(session, url):
 
 
 async def try_public_page(session, url):
+    if is_story_url(url) or is_post_url(url):
+        print("INSTAGRAM PAGE SKIPPED: public page gives only preview image")
+        return []
+
     try:
         async with session.get(
             url,
@@ -389,8 +436,10 @@ async def try_public_page(session, url):
             html = await response.text()
 
         items = collect_media_from_html(html)
+        items = [item for item in items if item["type"] == "video"]
+
         if items:
-            print("INSTAGRAM PAGE ITEMS:", items)
+            print("INSTAGRAM PAGE VIDEO ITEMS:", items)
             return items
 
     except Exception as e:
@@ -398,12 +447,20 @@ async def try_public_page(session, url):
 
     return []
 
-
 async def download_instagram_photo(url: str):
     connector = make_connector()
 
     async with aiohttp.ClientSession(connector=connector) as session:
-        for downloader in (try_saveig, try_snapinsta, try_public_page):
+        downloaders = [
+            try_igdownloader,
+            try_saveig,
+            try_snapinsta,
+        ]
+
+        if is_reel_url(url):
+            downloaders.append(try_public_page)
+
+        for downloader in downloaders:
             items = await downloader(session, url)
             items = filter_items_for_source(url, items)
 
