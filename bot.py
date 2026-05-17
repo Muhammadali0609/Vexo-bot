@@ -152,7 +152,7 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
         if platform == "instagram":
             photo_result = await download_instagram_photo(url)
             print("PHOTO RESULT:", photo_result)
-        if platform == "tiktok":
+        elif platform == "tiktok":
             photo_result = await download_tiktok_media(url)
         if photo_result:
             if photo_result.get("type") == "photos":
@@ -191,7 +191,12 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                 update_event_status(event_id, "success")
                 success = True
                 return
-            
+
+        if platform == "instagram" and is_instagram_story(url):
+            await msg.edit_text(t(lang, "story_unavailable"))
+            update_event_status(event_id, "error")
+            return
+        
         # 🚀 2. DOWNLOAD VIDEO
         async with semaphore:
             file_path = await download_manager(url, platform)
