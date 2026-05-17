@@ -5,6 +5,7 @@ import uuid
 import socket
 from html import unescape
 from urllib.parse import urlparse
+from aiohttp.resolver import ThreadedResolver
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -29,10 +30,10 @@ MAX_FILE_SIZE = 49 * 1024 * 1024
 
 def make_connector():
     return aiohttp.TCPConnector(
+        resolver=ThreadedResolver(),
         family=socket.AF_INET,
         ttl_dns_cache=300
     )
-
 
 def is_reel_url(url):
     return "/reel/" in url or "/reels/" in url or "/tv/" in url
