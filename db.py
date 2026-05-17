@@ -1,6 +1,8 @@
 import os
 import psycopg2
 from datetime import datetime
+import json
+from psycopg2.extras import Json
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -47,7 +49,19 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
-    
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS media_cache (
+            id SERIAL PRIMARY KEY,
+            url TEXT UNIQUE,
+            media_type TEXT NOT NULL,
+            items JSONB NOT NULL,
+            platform TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS events (
             id SERIAL PRIMARY KEY,
@@ -272,6 +286,47 @@ def save_cached_video(url, file_id, audio_file_id, platform):
                 audio_file_id = EXCLUDED.audio_file_id
         """, (url, file_id, audio_file_id, platform))
     
+        conn.commit()
+    finally:
+        conn.close()
+
+def get_cached_media(url):
+    conn = get_conn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT media_type, items
+            FROM media_cache
+            WHERE url = %s
+        """, (url,))
+        row = cursor.fetchone()
+
+        if not row:
+            return None
+
+        media_type, items = row
+        if isinstance(items, str):
+            items = json.loads(items)
+
+        return media_type, items
+    finally:
+        conn.close()
+
+
+def save_cached_media(url, media_type, items, platform):
+    conn = get_conn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO media_cache (url, media_type, items, platform)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (url)
+            DO UPDATE SET
+                media_type = EXCLUDED.media_type,
+                items = EXCLUDED.items,
+                platform = EXCLUDED.platform,
+                updated_at = CURRENT_TIMESTAMP
+        """, (url, media_type, Json(items), platform))
         conn.commit()
     finally:
         conn.close()
