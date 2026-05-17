@@ -524,23 +524,19 @@ def instaloader_story_items(url):
     profile = Profile.from_username(loader.context, username)
 
     items = []
-    start_collecting = False
 
     for story in loader.get_stories(userids=[profile.userid]):
         for item in story.get_items():
-            if story_id and str(item.mediaid) == str(story_id):
-                start_collecting = True
-
-            if not story_id or start_collecting:
-                if item.is_video:
-                    items.append({"type": "video", "url": item.video_url})
-                else:
-                    items.append({"type": "photo", "url": item.url})
+            if item.is_video:
+                items.append({"type": "video", "url": item.video_url})
+            else:
+                items.append({"type": "photo", "url": item.url})
 
             if len(items) >= 10:
                 return items
 
     return items
+
 
 async def try_instaloader(url):
     try:
