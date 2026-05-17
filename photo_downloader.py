@@ -517,22 +517,30 @@ def instaloader_post_items(url):
 
 def instaloader_story_items(url):
     username, story_id = extract_story_parts(url)
-    if not username or not story_id:
+    if not username:
         return []
 
     loader = get_instagram_loader()
     profile = Profile.from_username(loader.context, username)
 
+    items = []
+    start_collecting = False
+
     for story in loader.get_stories(userids=[profile.userid]):
         for item in story.get_items():
-            if str(item.mediaid) == str(story_id):
+            if story_id and str(item.mediaid) == str(story_id):
+                start_collecting = True
+
+            if not story_id or start_collecting:
                 if item.is_video:
-                    return [{"type": "video", "url": item.video_url}]
+                    items.append({"type": "video", "url": item.video_url})
+                else:
+                    items.append({"type": "photo", "url": item.url})
 
-                return [{"type": "photo", "url": item.url}]
+            if len(items) >= 10:
+                return items
 
-    return []
-
+    return items
 
 async def try_instaloader(url):
     try:
