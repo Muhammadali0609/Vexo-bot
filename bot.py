@@ -3,7 +3,7 @@ import asyncio
 import re
 import requests
 
-from telegram import Update, InputMediaPhoto
+from telegram import Update, InputMediaPhoto, InputMediaVideo
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
 from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video, update_event_status, init_db, set_user_lang, get_user_lang, is_user_banned
@@ -191,6 +191,33 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                 update_event_status(event_id, "success")
                 success = True
                 return
+                
+            elif photo_result.get("type") == "media_group":
+                media = []
+
+                for i, item in enumerate(photo_result["data"][:10]):
+                    caption = t(lang, "caption") if i == 0 else None
+
+                    if item["type"] == "video":
+                        media.append(
+                            InputMediaVideo(
+                                media=item["url"],
+                                caption=caption
+                            )
+                        )
+                    else:
+                        media.append(
+                            InputMediaPhoto(
+                                media=item["url"],
+                                caption=caption
+                            )
+                        )
+
+                await update.message.reply_media_group(media)
+                update_event_status(event_id, "success")
+                success = True
+                return
+        
 
         if platform == "instagram" and is_instagram_story(url):
             await msg.edit_text(t(lang, "story_unavailable"))
