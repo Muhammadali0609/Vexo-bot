@@ -325,6 +325,7 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                                 supports_streaming=True
                             )
                     else:
+                        width, height = get_video_metadata(video_data)
                         sent_msg = await update.message.reply_video(
                             video=video_data,
                             caption=t(lang, "caption"),
