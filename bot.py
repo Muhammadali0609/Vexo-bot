@@ -28,21 +28,6 @@ from photo_downloader import download_instagram_photo, download_tiktok_media
 
 print("🔥 BOT STARTED")
 
-import socket
-def test_sites():
-    domains = [
-        "snapinsta.app",
-        "igram.world",
-        "saveinsta.app",
-    ]
-
-    for d in domains:
-        try:
-            print(d, socket.gethostbyname(d))
-        except Exception as e:
-            print(d, "DNS ERROR:", e)
-test_sites()
-
 semaphore = asyncio.Semaphore(2)
 instagram_semaphore = asyncio.Semaphore(1)
 ACTIVE_TASKS = set()
@@ -514,7 +499,6 @@ async def post_init(app):
     print("🚀 webhook set")
 
 def main():
-    test_sites()
     init_db()
     port = int(os.environ.get("PORT", 8080))
     app.post_init = post_init
