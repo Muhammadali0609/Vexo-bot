@@ -116,7 +116,7 @@ async def download_media_file(session, item):
 async def materialize_items(session, items):
     local_items = []
 
-    for item in items[:10]:
+    for item in items:
         local_item = await download_media_file(session, item)
         if local_item:
             local_items.append(local_item)
@@ -132,7 +132,7 @@ def build_result(items):
             if not any(existing["url"] == item["url"] for existing in clean_items):
                 clean_items.append(item)
 
-    clean_items = clean_items[:10]
+    #clean_items = clean_items[:10]
 
     if not clean_items:
         return None
@@ -234,9 +234,6 @@ def instaloader_story_items(url):
                 items.append({"type": "video", "url": item.video_url})
             else:
                 items.append({"type": "photo", "url": item.url})
-
-            if len(items) >= 10:
-                return items
 
     return items
 
