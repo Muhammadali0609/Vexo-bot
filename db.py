@@ -331,6 +331,19 @@ def save_cached_media(url, media_type, items, platform):
     finally:
         conn.close()
 
+def delete_cached_media(url):
+    conn = get_conn()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            DELETE FROM media_cache
+            WHERE url = %s
+        """, (url,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def set_user_lang(user_id, lang):
     conn = get_conn()
     try:
