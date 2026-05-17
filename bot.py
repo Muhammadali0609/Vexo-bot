@@ -56,7 +56,13 @@ def detect_platform(text: str):
     if "instagram.com" in text:
         return "instagram"
     return "unknown"
-    
+
+def is_instagram_story(url: str):
+    return (
+        "instagram.com/stories/" in url
+        or "/stories/" in url
+    )
+
 async def start(update, context):
     keyboard = [
         [
