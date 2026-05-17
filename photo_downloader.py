@@ -13,7 +13,7 @@ from aiohttp.resolver import ThreadedResolver
 import aiohttp
 
 DOWNLOAD_HEADERS = {
-    "User-Agent": HEADERS["User-Agent"],
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     "Accept": "*/*",
     "Referer": "https://www.instagram.com/",
 }
