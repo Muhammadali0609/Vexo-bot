@@ -3,6 +3,11 @@ import os
 import re
 import uuid
 import socket
+import asyncio
+import base64
+import tempfile
+from instaloader import Instaloader, Post, Profile
+
 from html import unescape
 from urllib.parse import urlparse
 from aiohttp.resolver import ThreadedResolver
@@ -447,36 +452,121 @@ async def try_public_page(session, url):
         print("INSTAGRAM PAGE ERROR:", e)
 
     return []
+    
+INSTAGRAM_LOADER = None
+
+def extract_instagram_shortcode(url):
+    match = re.search(r"instagram\.com/(?:p|reel|reels|tv)/([^/?#]+)", url)
+    return match.group(1) if match else None
+
+
+def extract_story_parts(url):
+    match = re.search(r"instagram\.com/stories/([^/?#]+)/([^/?#]+)", url)
+    if not match:
+        return None, None
+
+    return match.group(1), match.group(2)
+
+
+def get_instagram_loader():
+    global INSTAGRAM_LOADER
+
+    if INSTAGRAM_LOADER:
+        return INSTAGRAM_LOADER
+
+    loader = Instaloader(quiet=True)
+    username = os.getenv("IG_USERNAME")
+    session_b64 = os.getenv("IG_SESSION_B64")
+
+    if username and session_b64:
+        session_path = os.path.join(tempfile.gettempdir(), "instagram.session")
+        with open(session_path, "wb") as file:
+            file.write(base64.b64decode(session_b64))
+
+        loader.load_session_from_file(username, session_path)
+        print("INSTALOADER SESSION LOADED")
+
+    INSTAGRAM_LOADER = loader
+    return loader
+
+
+def instaloader_post_items(url):
+    shortcode = extract_instagram_shortcode(url)
+    if not shortcode:
+        return []
+
+    loader = get_instagram_loader()
+    post = Post.from_shortcode(loader.context, shortcode)
+
+    items = []
+
+    if post.typename == "GraphSidecar":
+        for node in post.get_sidecar_nodes():
+            if node.is_video:
+                items.append({"type": "video", "url": node.video_url})
+            else:
+                items.append({"type": "photo", "url": node.display_url})
+
+        return items
+
+    if post.is_video:
+        return [{"type": "video", "url": post.video_url}]
+
+    return [{"type": "photo", "url": post.url}]
+
+
+def instaloader_story_items(url):
+    username, story_id = extract_story_parts(url)
+    if not username or not story_id:
+        return []
+
+    loader = get_instagram_loader()
+    profile = Profile.from_username(loader.context, username)
+
+    for story in loader.get_stories(userids=[profile.userid]):
+        for item in story.get_items():
+            if str(item.mediaid) == str(story_id):
+                if item.is_video:
+                    return [{"type": "video", "url": item.video_url}]
+
+                return [{"type": "photo", "url": item.url}]
+
+    return []
+
+
+async def try_instaloader(url):
+    try:
+        if is_story_url(url):
+            return await asyncio.to_thread(instaloader_story_items, url)
+
+        return await asyncio.to_thread(instaloader_post_items, url)
+
+    except Exception as e:
+        print("INSTALOADER ERROR:", e)
+        return []
+
 
 async def download_instagram_photo(url: str):
+    items = await try_instaloader(url)
+    items = filter_items_for_source(url, items)
+
+    if not items:
+        print("INSTAGRAM RESULT: None")
+        return None
+
     connector = make_connector()
 
     async with aiohttp.ClientSession(connector=connector) as session:
-        downloaders = [
-            try_igdownloader,
-            try_saveig,
-            try_snapinsta,
-        ]
+        local_items = await materialize_items(session, items)
+        result = build_result(local_items)
 
-        if is_reel_url(url):
-            downloaders.append(try_public_page)
-
-        for downloader in downloaders:
-            items = await downloader(session, url)
-            items = filter_items_for_source(url, items)
-
-            if not items:
-                continue
-
-            local_items = await materialize_items(session, items)
-            result = build_result(local_items)
-
-            if result:
-                print("INSTAGRAM RESULT:", result)
-                return result
+        if result:
+            print("INSTAGRAM RESULT:", result)
+            return result
 
     print("INSTAGRAM RESULT: None")
     return None
+
 
 # =========================
 # 🎵 TIKTOK PHOTO (oEmbed fallback)
