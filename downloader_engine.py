@@ -67,8 +67,10 @@ def get_ydl_opts(platform, file_name):
             "http_headers": {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             },
-            "cookiefile": "cookies/instagram.txt"
         })
+
+        if os.path.exists("cookies/instagram.txt"):
+            base["cookiefile"] = "cookies/instagram.txt"
 
     # =========================
     # 🔥 DEFAULT
