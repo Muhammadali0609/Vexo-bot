@@ -234,6 +234,9 @@ def instaloader_story_items(url):
                 items.append({"type": "video", "url": item.video_url})
             else:
                 items.append({"type": "photo", "url": item.url})
+                
+            if len(items) >= 10:
+                return items
 
     return items
 
