@@ -70,6 +70,10 @@ def is_instagram_post(url: str):
         or "/p/" in url
     )
 
+def chunks(items, size=10):
+    for i in range(0, len(items), size):
+        yield items[i:i + size]
+
 async def start(update, context):
     keyboard = [
         [
@@ -192,35 +196,40 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                         if is_local:
                             safe_remove(photo)
 
-                media = []
                 opened_files = []
-
                 try:
-                    for i, img in enumerate(photos[:10]):
-                        caption = t(lang, "caption") if i == 0 else None
-                        media_value = img
-
-                        if is_local and os.path.exists(img):
-                            file = open(img, "rb")
-                            opened_files.append(file)
-                            media_value = file
-
-                        media.append(
-                            InputMediaPhoto(
-                                media=media_value,
-                                caption=caption
+                    first_group = True
+                
+                    for group in chunks(photos, 10):
+                        media = []
+                
+                        for i, img in enumerate(group):
+                            caption = t(lang, "caption") if first_group and i == 0 else None
+                            media_value = img
+                
+                            if is_local and os.path.exists(img):
+                                file = open(img, "rb")
+                                opened_files.append(file)
+                                media_value = file
+                
+                            media.append(
+                                InputMediaPhoto(
+                                    media=media_value,
+                                    caption=caption
+                                )
                             )
-                        )
-
-                    await update.message.reply_media_group(media)
+                
+                        await update.message.reply_media_group(media)
+                        first_group = False
+                
                     update_event_status(event_id, "success")
                     success = True
                     return
-
+                
                 finally:
                     for file in opened_files:
                         file.close()
-
+                
                     if is_local:
                         for img in photos:
                             safe_remove(img)
@@ -254,47 +263,51 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
                         safe_remove(video_data)
 
             elif photo_result.get("type") == "media_group":
-                media = []
                 opened_files = []
-
                 try:
-                    for i, item in enumerate(photo_result["data"][:10]):
-                        caption = t(lang, "caption") if i == 0 else None
-                        media_value = item["url"]
-
-                        if is_local and os.path.exists(media_value):
-                            file = open(media_value, "rb")
-                            opened_files.append(file)
-                            media_value = file
-
-                        if item["type"] == "video":
-                            media.append(
-                                InputMediaVideo(
-                                    media=media_value,
-                                    caption=caption
+                    first_group = True
+                
+                    for group in chunks(photo_result["data"], 10):
+                        media = []
+                
+                        for i, item in enumerate(group):
+                            caption = t(lang, "caption") if first_group and i == 0 else None
+                            media_value = item["url"]
+                
+                            if is_local and os.path.exists(media_value):
+                                file = open(media_value, "rb")
+                                opened_files.append(file)
+                                media_value = file
+                
+                            if item["type"] == "video":
+                                media.append(
+                                    InputMediaVideo(
+                                        media=media_value,
+                                        caption=caption
+                                    )
                                 )
-                            )
-                        else:
-                            media.append(
-                                InputMediaPhoto(
-                                    media=media_value,
-                                    caption=caption
+                            else:
+                                media.append(
+                                    InputMediaPhoto(
+                                        media=media_value,
+                                        caption=caption
+                                    )
                                 )
-                            )
-
-                    await update.message.reply_media_group(media)
+                
+                        await update.message.reply_media_group(media)
+                        first_group = False
+                
                     update_event_status(event_id, "success")
                     success = True
                     return
-
+                
                 finally:
                     for file in opened_files:
                         file.close()
-
+                
                     if is_local:
                         for item in photo_result["data"]:
                             safe_remove(item["url"])
-        
 
         if platform == "instagram" and is_instagram_story(url):
             await msg.edit_text(t(lang, "story_unavailable"))
