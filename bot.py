@@ -6,7 +6,20 @@ import requests
 from telegram import Update, InputMediaPhoto, InputMediaVideo
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (ApplicationBuilder,MessageHandler,CommandHandler,CallbackQueryHandler,ContextTypes,filters,)
-from db import add_user, get_users_count, add_event, get_cached_video, save_cached_video, update_event_status, init_db, set_user_lang, get_user_lang, is_user_banned, get_cached_media, save_cached_media
+from db import (
+    add_user,
+    get_users_count,
+    add_event,
+    get_cached_video,
+    save_cached_video,
+    update_event_status,
+    init_db, set_user_lang,
+    get_user_lang,
+    is_user_banned,
+    get_cached_media,
+    save_cached_media,
+    delete_cached_media
+)
 from config import TOKEN, WEBHOOK_URL
 from admin import adminm, admin_callback
 from downloader_engine import download_manager, safe_remove, download_audio, get_video_metadata
@@ -182,10 +195,14 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
         cached_media = get_cached_media(url)
 
         if cached_media:
-            await send_cached_media(update, lang, cached_media)
-            update_event_status(event_id, "success")
-            success = True
-            return
+            try:
+                await send_cached_media(update, lang, cached_media)
+                update_event_status(event_id, "success")
+                success = True
+                return
+            except Exception as e:
+                print("MEDIA CACHE SEND ERROR:", e)
+                delete_cached_media(url)
         
         cached = get_cached_video(url)
 
