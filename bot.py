@@ -28,27 +28,19 @@ from photo_downloader import download_instagram_photo, download_tiktok_media
 
 print("🔥 BOT STARTED")
 
+import socket
 def test_sites():
-    urls = [
-        "https://snapinsta.app/",
-        "https://igram.world/",
-        "https://saveinsta.app/",
+    domains = [
+        "snapinsta.app",
+        "igram.world",
+        "saveinsta.app",
     ]
-    for url in urls:
+
+    for d in domains:
         try:
-            r = requests.get(
-                url,
-                timeout=15,
-                headers={
-                    "User-Agent": "Mozilla/5.0"
-                }
-            )
-            print(url)
-            print("STATUS:", r.status_code)
-            print("TEXT:", r.text[:200])
-            print("-" * 50)
+            print(d, socket.gethostbyname(d))
         except Exception as e:
-            print(url, "ERROR:", e)
+            print(d, "DNS ERROR:", e)
 test_sites()
 
 semaphore = asyncio.Semaphore(2)
