@@ -28,6 +28,29 @@ from photo_downloader import download_instagram_photo, download_tiktok_media
 
 print("🔥 BOT STARTED")
 
+def test_sites():
+    urls = [
+        "https://snapinsta.app/",
+        "https://igram.world/",
+        "https://saveinsta.app/",
+    ]
+    for url in urls:
+        try:
+            r = requests.get(
+                url,
+                timeout=15,
+                headers={
+                    "User-Agent": "Mozilla/5.0"
+                }
+            )
+            print(url)
+            print("STATUS:", r.status_code)
+            print("TEXT:", r.text[:200])
+            print("-" * 50)
+        except Exception as e:
+            print(url, "ERROR:", e)
+test_sites()
+
 semaphore = asyncio.Semaphore(2)
 instagram_semaphore = asyncio.Semaphore(1)
 ACTIVE_TASKS = set()
@@ -499,6 +522,7 @@ async def post_init(app):
     print("🚀 webhook set")
 
 def main():
+    test_sites()
     init_db()
     port = int(os.environ.get("PORT", 8080))
     app.post_init = post_init
