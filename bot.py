@@ -63,6 +63,12 @@ def is_instagram_story(url: str):
         or "/stories/" in url
     )
 
+def is_instagram_post(url: str):
+    return (
+        "instagram.com/p/" in url
+        or "/p/" in url
+    )
+
 async def start(update, context):
     keyboard = [
         [
@@ -292,7 +298,12 @@ async def process_video(update, context, url, user_id, platform, event_id, msg):
             await msg.edit_text(t(lang, "story_unavailable"))
             update_event_status(event_id, "error")
             return
-        
+
+        if platform == "instagram" and is_instagram_post(url):
+            await msg.edit_text(t(lang, "error"))
+            update_event_status(event_id, "error")
+            return
+            
         # 🚀 2. DOWNLOAD VIDEO
         async with semaphore:
             file_path = await download_manager(url, platform)
