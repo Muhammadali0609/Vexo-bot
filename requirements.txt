@@ -7,4 +7,3 @@ aiohttp
 redis
 requests
 beautifulsoup4
-aiodns
